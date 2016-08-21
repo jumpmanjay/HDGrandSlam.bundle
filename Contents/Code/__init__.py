@@ -1,4 +1,4 @@
-from PyHDHR import PyHDHR, Tuner, DVR, ProgramFilter, SortType, GroupType
+from PyHDHR.PyHDHR import PyHDHR, Tuner, DVR, ProgramFilter, SortType, GroupType
 pyhdhr = None
 
 TITLE    = 'HDGrandSlam'
