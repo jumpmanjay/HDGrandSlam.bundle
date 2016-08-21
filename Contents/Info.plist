@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+	<dict>
+		<!-- IMPORTANT NOTE. IF THERE ARE MULTIPLE VALUES FOR A KEY, THEN EACH VALUE SHOULD BE SEPARATED BY A COMMA IN ONE STRING  -->    
+		<!-- EXCEPT IF THE KEY HAS <array></array> CODE WITHIN IT.  THEN EACH VALUE FOR THAT KEY MUST BE ENTERED AS A SEPARATE STRING WITHIN THAT ARRAY -->    
+		<key>CFBundleIdentifier</key>
+		    <!-- Unique PMS identifier for the plugin and its logs.  Format should always be com.plexapp.plugins.<nameofyourplugin> with no capital letters, spaces, or special characters -->
+		    <string>com.plexapp.plugins.hdgrandslam</string>
+		<key>PlexFrameworkVersion</key>
+		    <!-- Version should always be set to 2 -->        
+		    <string>2</string>
+		<!-- Below are the way in which to include or exclude clients or servers from a channel -->    
+		<!-- Not necessary in initial design. If submitted to the channel store, any values will be added in the code review stage prior to release -->    
+		<!-- Since you want to create plugins that work on most clients and servers, most often you will set it to * and use the exclusion for any that have issues -->    
+		<!-- Possible values are * for all platforms, MacOSX, Windows, Linux, Roku, Android, iOS, Safari, Firefox, Chrome, LGTV, Samsung, PlexConnect and Plex Home Theater -->
+		<key>PlexClientPlatforms</key>
+		    <!-- List any client platforms supported in the plugin. -->    
+		    <string>*</string>
+		    
+		<key>PlexPluginDebug</key>
+		<array>
+			<string>1</string>
+		</array>
+		<key>PlexPluginCodePolicy</key>
+		    <!-- this allows channels to access some python methods which are otherwise blocked, as well as import external code libraries, and interact with the PMS HTTP API -->    
+		    <string>Elevated</string>
+		<key>PlexVideoCodec</key>
+			<array>
+				<string>MPEG2?</string>
+			</array>
+        </dict>
+</plist>
