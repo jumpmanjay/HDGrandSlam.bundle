@@ -19,3 +19,7 @@ Known Incompatible Clients:
 -Nexus 7 (2013)
 
 -Nexus Player
+
+Downloading from GitHub will not pull down the submodules in the same zip, so here is a download link:
+
+https://drive.google.com/open?id=0B7sgj0XESdTfbUJWN2xXVm5JSkk
