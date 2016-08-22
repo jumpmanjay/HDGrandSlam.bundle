@@ -20,6 +20,6 @@ Known Incompatible Clients:
 
 -Nexus Player
 
-Downloading from GitHub will not pull down the submodules in the same zip, so here is a download link:
 
-https://drive.google.com/open?id=0B7sgj0XESdTfbUJWN2xXVm5JSkk
+
+Download this repo and install as a Plug-in.
