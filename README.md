@@ -7,6 +7,8 @@ Known Supported Clients:
 
 -Chrome
 
+-Windows UWP
+
 -Nexus 9
 
 -nVidia ShieldTV
