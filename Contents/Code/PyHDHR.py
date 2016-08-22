@@ -23,16 +23,24 @@ class GroupType:
 class SeriesSummary:
     SeriesID = ""
     ImageURL = ""
+    EpisodeCount = 0
     
     def __init__(self,SeriesID,ImageURL):
         self.SeriesID = SeriesID
         self.ImageURL = ImageURL
+        self.EpisodeCount = 1
         
     def getSeriesID(self):
         return self.SeriesID
 
     def getImageURL(self):
         return self.ImageURL
+        
+    def getEpisodeCount(self):
+        return self.EpisodeCount
+        
+    def addEpisodeCount(self,ct):
+        self.EpisodeCount = self.EpisodeCount + ct
 
 class ChannelInfo:
     GuideNumber = ""
@@ -743,6 +751,8 @@ class PyHDHR:
             if progs[key].getDisplayGroupTitle() not in series:
                 ss = SeriesSummary(progs[key].getSeriesID(),progs[key].getImageURL())
                 series[progs[key].getDisplayGroupTitle()] = ss
+            else:
+                series[progs[key].getDisplayGroupTitle()].addEpisodeCount(1)
         return series
         
     def getRecordingRules(self):
