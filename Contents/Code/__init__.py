@@ -1,4 +1,4 @@
-from PyHDHR import PyHDHR, Tuner, DVR, ProgramFilter, SortType, GroupType
+from PyHDHR import PyHDHR, Tuner, DVR, ProgramFilter, SortType, GroupType, SeriesSummary
 pyhdhr = None
 
 TITLE    = 'HDGrandSlam'
@@ -127,7 +127,7 @@ def ShowRecordingsBySeriesMenu(title):
     
     if series:
         for titlekey in sorted(series):
-            oc.add(TVShowObject(key=Callback(ShowRecordingsBySeries, title=str(titlekey), seriesid=series[titlekey].getSeriesID()), title=str(titlekey), thumb=series[titlekey].getImageURL(),episode_count=len(series),rating_key=series[titlekey].getSeriesID()))
+            oc.add(TVShowObject(key=Callback(ShowRecordingsBySeries, title=str(titlekey), seriesid=series[titlekey].getSeriesID()), title=str(titlekey), thumb=series[titlekey].getImageURL(),episode_count=(series[titlekey].getEpisodeCount()-1),rating_key=series[titlekey].getSeriesID()))
     return oc
 
 @route(PREFIX + '/showrecordingsbyseries')
