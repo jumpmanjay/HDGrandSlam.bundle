@@ -51,7 +51,7 @@ def ShowFavoriteChannels(title):
         if chan.getFavorite() == 1:
             pi = chan.getProgramInfos()
             if len(pi) > 0:
-                oc.add(TVShowObject(key=Callback(ShowTunedTVStaged,title=str(line),guideno=str(line)), title=str(line),thumb=chan.getImageURL(),summary=str(pi[0].getEpisodeTitle() + " - " + pi[0].getSynopsis()),rating_key=pi[0].getSeriesID()))
+                oc.add(DirectoryObject(key=Callback(ShowTunedTVStaged,title=str(line),guideno=str(line)), title=str(line),thumb=chan.getImageURL()))
     return oc
 
 @route(PREFIX + '/showallchannels')
@@ -67,7 +67,7 @@ def ShowAllChannels(title):
         chan = pyhdhr.getChannelInfo(str(line))
         pi = chan.getProgramInfos()
         if len(pi) > 0:
-            oc.add(TVShowObject(key=Callback(ShowTunedTVStaged,title=str(line),guideno=str(line)), title=str(line),thumb=chan.getImageURL(),summary=str(pi[0].getEpisodeTitle() + " - " + pi[0].getSynopsis()),rating_key=pi[0].getSeriesID()))
+            oc.add(DirectoryObject(key=Callback(ShowTunedTVStaged,title=str(line),guideno=str(line)), title=str(line),thumb=chan.getImageURL()))
     return oc
 
 @route(PREFIX + '/showwhatson')
