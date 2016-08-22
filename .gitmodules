@@ -1,6 +1,0 @@
-[submodule "Contents/Code/PyHDHR"]
-	path = Contents/Code/PyHDHR
-	url = https://github.com/jumpmanjay/PyHDHR.git
-[submodule "Contents/Libraries/Shared/PyHDHR"]
-	path = Contents/Libraries/Shared/PyHDHR
-	url = https://github.com/jumpmanjay/PyHDHR.git
