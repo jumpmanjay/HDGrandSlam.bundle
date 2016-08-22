@@ -4,7 +4,11 @@ pyhdhr = None
 TITLE    = 'HDGrandSlam'
 PREFIX   = '/video/hdgrandslam'
 
-ICON     = 'icon.png'
+ICON = 'icon.png'
+ICON_LIVETV = 'livetv.png'
+ICON_RECORDINGS = 'recordings.png'
+ICON_FAVORITES = 'favorites.png'
+ICON_ALLCHANNELS = 'allchannels.png'
 
 def Start():
     ObjectContainer.title1 = TITLE
@@ -20,17 +24,17 @@ def MainMenu():
     pyhdhr = PyHDHR()
     
     oc = ObjectContainer()
-    oc.add(DirectoryObject(key=Callback(ShowLiveTV, title="Live TV"), title="Live TV", thumb='https://www.silicondust.com/wp-content/uploads/2016/03/dvr-logo.png'))
-    oc.add(DirectoryObject(key=Callback(ShowMainRecordingsMenu, title="Recordings"), title="Recordings", thumb='https://www.silicondust.com/wp-content/uploads/2016/03/dvr-logo.png'))
+    oc.add(DirectoryObject(key=Callback(ShowLiveTV, title="Live TV"), title="Live TV", thumb=R(ICON_LIVETV)))
+    oc.add(DirectoryObject(key=Callback(ShowMainRecordingsMenu, title="Recordings"), title="Recordings", thumb=R(ICON_RECORDINGS)))
 
     return oc
 
 @route(PREFIX + '/showlivetv')
 def ShowLiveTV(title):
     oc = ObjectContainer(title2=title)
-    oc.add(DirectoryObject(key=Callback(ShowFavoriteChannels, title="Favorite Channels"), title="Favorite Channels", thumb='https://www.silicondust.com/wp-content/uploads/2016/03/dvr-logo.png'))
-    oc.add(DirectoryObject(key=Callback(ShowAllChannels, title="All Channels"), title="All Channels", thumb='https://www.silicondust.com/wp-content/uploads/2016/03/dvr-logo.png'))
-    oc.add(DirectoryObject(key=Callback(ShowWhatsOn, title="What's On"), title="What's On", thumb='https://www.silicondust.com/wp-content/uploads/2016/03/dvr-logo.png'))
+    oc.add(DirectoryObject(key=Callback(ShowFavoriteChannels, title="Favorite Channels"), title="Favorite Channels", thumb=R(ICON_FAVORITES)))
+    oc.add(DirectoryObject(key=Callback(ShowAllChannels, title="All Channels"), title="All Channels", thumb=R(ICON_ALLCHANNELS)))
+    oc.add(DirectoryObject(key=Callback(ShowWhatsOn, title="What's On"), title="What's On", thumb=R(ICON_LIVETV)))
     return oc
 
 @route(PREFIX + '/showfavoritechannels')
