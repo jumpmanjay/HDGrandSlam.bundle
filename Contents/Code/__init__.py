@@ -178,8 +178,8 @@ def ShowTunedTV(guideno,include_container=False,plat=None):
         elif chaninfo.getVideoCodec() == "H264":
             vcodec = "H.264"
         else:
-            Log.Critical("Unknown video codec")
-            oc = ObjectContainer(header="Empty", message="Unknown video codec")
+            Log.Critical("Unknown video codec: " + chaninfo.getVideoCodec())
+            oc = ObjectContainer(header="Empty", message="Unknown video codec: " + chaninfo.getVideoCodec())
             return oc
 
         acodec = ""
@@ -188,8 +188,8 @@ def ShowTunedTV(guideno,include_container=False,plat=None):
         elif chaninfo.getAudioCodec() == "AC3":
             acodec = "ac3"
         else:
-            Log.Critical("Unknown audio codec")
-            oc = ObjectContainer(header="Empty", message="Unknown audio codec")
+            Log.Critical("Unknown audio codec: " + chaninfo.getAudioCodec())
+            oc = ObjectContainer(header="Empty", message="Unknown audio codec: " + chaninfo.getAudioCodec())
             return oc
             
         brate = None
