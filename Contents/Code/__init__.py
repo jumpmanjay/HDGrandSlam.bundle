@@ -49,9 +49,7 @@ def ShowFavoriteChannels(title):
     for line in cl:
         chan = pyhdhr.getChannelInfo(str(line))
         if chan.getFavorite() == 1:
-            pi = chan.getProgramInfos()
-            if len(pi) > 0:
-                oc.add(DirectoryObject(key=Callback(ShowTunedTVStaged,title=str(line),guideno=str(line)), title=str(line),thumb=chan.getImageURL()))
+            oc.add(DirectoryObject(key=Callback(ShowTunedTVStaged,title=str(line),guideno=str(line)), title=str(line),thumb=chan.getImageURL()))
     return oc
 
 @route(PREFIX + '/showallchannels')
@@ -65,9 +63,7 @@ def ShowAllChannels(title):
     cl = pyhdhr.getChannelList()
     for line in cl:
         chan = pyhdhr.getChannelInfo(str(line))
-        pi = chan.getProgramInfos()
-        if len(pi) > 0:
-            oc.add(DirectoryObject(key=Callback(ShowTunedTVStaged,title=str(line),guideno=str(line)), title=str(line),thumb=chan.getImageURL()))
+        oc.add(DirectoryObject(key=Callback(ShowTunedTVStaged,title=str(line),guideno=str(line)), title=str(line),thumb=chan.getImageURL()))
     return oc
 
 @route(PREFIX + '/showwhatson')
@@ -153,16 +149,29 @@ def ShowTunedTV(guideno,include_container=False,plat=None):
     if not plat:
         plat = Client.Platform
     
-    proginfo = pyhdhr.getWhatsOn(guideno)
-    if not proginfo:
-        return ObjectContainer(header="Empty", message="Could not fetch program info")
-    
     liveurl = pyhdhr.getLiveTVURL(guideno)
     if not liveurl:
         return ObjectContainer(header="Empty", message="Could not fetch url")
     
     chaninfo = pyhdhr.getChannelInfo(guideno)
     if chaninfo:
+        p_title = ""
+        p_stitle = ""
+        p_synopsis = ""
+        p_imageurl = ""
+        
+        proginfo = pyhdhr.getWhatsOn(guideno)
+        if not proginfo:
+            p_title=chaninfo.getGuideNumber()
+            p_stitle=chaninfo.getGuideName()
+            p_synopsis=""
+            p_imageurl=chaninfo.getImageURL()
+        else:
+            p_title=proginfo.getTitle()
+            p_stitle=proginfo.getEpisodeTitle()
+            p_synopsis=proginfo.getSynopsis()
+            p_imageurl=proginfo.getImageURL()
+        
         vcodec = ""
         if chaninfo.getVideoCodec() == "MPEG2":
             vcodec = "mpeg2video"
@@ -205,11 +214,11 @@ def ShowTunedTV(guideno,include_container=False,plat=None):
         obj = EpisodeObject(
             key=Callback(ShowTunedTV,guideno=guideno,include_container=True,plat=plat),
             url=liveurl,
-            title=proginfo.getTitle(),
-            source_title=proginfo.getEpisodeTitle(),
-            summary=proginfo.getSynopsis(),
+            title=p_title,
+            source_title=p_stitle,
+            summary=p_synopsis,
             duration=14400000,
-            thumb=proginfo.getImageURL(),
+            thumb=p_imageurl,
             items = [   
                 MediaObject(
                     parts = [
