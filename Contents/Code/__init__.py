@@ -1,4 +1,10 @@
-from PyHDHR import PyHDHR, Tuner, DVR, ProgramFilter, SortType, GroupType, SeriesSummary
+PyHDHR = SharedCodeService.PyHDHR.PyHDHR
+Tuner = SharedCodeService.PyHDHR.Tuner
+ProgramFilter = SharedCodeService.PyHDHR.ProgramFilter
+SortType = SharedCodeService.PyHDHR.SortType
+GroupType = SharedCodeService.PyHDHR.GroupType
+SeriesSummary = SharedCodeService.PyHDHR.SeriesSummary
+
 pyhdhr = None
 
 TITLE    = 'HDGrandSlam'
@@ -26,7 +32,7 @@ def MainMenu():
     oc = ObjectContainer()
     oc.add(DirectoryObject(key=Callback(ShowLiveTV, title="Live TV"), title="Live TV", thumb=R(ICON_LIVETV)))
     oc.add(DirectoryObject(key=Callback(ShowMainRecordingsMenu, title="Recordings"), title="Recordings", thumb=R(ICON_RECORDINGS)))
-
+    #oc.add(SearchDirectoryObject(name="HDGrandSlam.All"))
     return oc
 
 @route(PREFIX + '/showlivetv')
@@ -35,6 +41,7 @@ def ShowLiveTV(title):
     oc.add(DirectoryObject(key=Callback(ShowFavoriteChannels, title="Favorite Channels"), title="Favorite Channels", thumb=R(ICON_FAVORITES)))
     oc.add(DirectoryObject(key=Callback(ShowAllChannels, title="All Channels"), title="All Channels", thumb=R(ICON_ALLCHANNELS)))
     oc.add(DirectoryObject(key=Callback(ShowWhatsOn, title="What's On"), title="What's On", thumb=R(ICON_LIVETV)))
+    #oc.add(SearchDirectoryObject(name="HDGrandSlam.LiveTV"))
     return oc
 
 @route(PREFIX + '/showfavoritechannels')
@@ -95,6 +102,7 @@ def ShowMainRecordingsMenu(title):
     oc = ObjectContainer(title2=title)
     oc.add(DirectoryObject(key=Callback(ShowAllRecordings, title="All Recordings"), title="All Recordings", thumb='https://www.silicondust.com/wp-content/uploads/2016/03/dvr-logo.png'))
     oc.add(DirectoryObject(key=Callback(ShowRecordingsBySeriesMenu, title="By Series"), title="By Series", thumb='https://www.silicondust.com/wp-content/uploads/2016/03/dvr-logo.png'))
+    #oc.add(SearchDirectoryObject(name="HDGrandSlam.Recorded"))
     return oc
 
 @route(PREFIX + '/showallrecordings')
@@ -141,13 +149,10 @@ def ShowRecordingsBySeries(title,seriesid):
     return oc
 
 @route(PREFIX + '/showtunedtv')
-def ShowTunedTV(guideno,include_container=False,plat=None):
+def ShowTunedTV(guideno,include_container=False):
     global pyhdhr
     if not pyhdhr:
         pyhdhr = PyHDHR()
-    
-    if not plat:
-        plat = Client.Platform
     
     liveurl = pyhdhr.getLiveTVURL(guideno)
     if not liveurl:
@@ -155,6 +160,35 @@ def ShowTunedTV(guideno,include_container=False,plat=None):
     
     chaninfo = pyhdhr.getChannelInfo(guideno)
     if chaninfo:
+        vcodec = ""
+        acodec = ""
+        
+        t = chaninfo.getTuner()
+        if t.getModelNumber() == "HDTC-2US":
+            vcodec = "mpeg1video"
+            acodec = "ac3"
+            liveurl = liveurl + "?transcode=none"
+        else:
+            if chaninfo.getVideoCodec() == "MPEG2":
+                vcodec = "mpeg2video"
+            elif chaninfo.getVideoCodec() == "H264":
+                vcodec = "H.264"
+            else:
+                msg = "Unknown video codec: " + chaninfo.getVideoCodec()
+                Log.Critical(msg)
+                return ObjectContainer(header="Empty", message=msg)
+
+            if chaninfo.getAudioCodec() == "AAC":
+                acodec = "aac"
+            elif chaninfo.getAudioCodec() == "AC3":
+                acodec = "ac3"
+            else:
+                msg = "Unknown audio codec: " + chaninfo.getAudioCodec()
+                Log.Critical(msg)
+                return ObjectContainer(header="Empty", message=msg)
+        
+        Log.Debug("Using video codec: " + vcodec + ", audio codec: " + acodec)
+        
         p_title = ""
         p_stitle = ""
         p_synopsis = ""
@@ -172,26 +206,6 @@ def ShowTunedTV(guideno,include_container=False,plat=None):
             p_synopsis=proginfo.getSynopsis()
             p_imageurl=proginfo.getImageURL()
         
-        vcodec = ""
-        if chaninfo.getVideoCodec() == "MPEG2":
-            vcodec = "mpeg2video"
-        elif chaninfo.getVideoCodec() == "H264":
-            vcodec = "H.264"
-        else:
-            Log.Critical("Unknown video codec: " + chaninfo.getVideoCodec())
-            oc = ObjectContainer(header="Empty", message="Unknown video codec: " + chaninfo.getVideoCodec())
-            return oc
-
-        acodec = ""
-        if chaninfo.getAudioCodec() == "AAC":
-            acodec = "aac"
-        elif chaninfo.getAudioCodec() == "AC3":
-            acodec = "ac3"
-        else:
-            Log.Critical("Unknown audio codec: " + chaninfo.getAudioCodec())
-            oc = ObjectContainer(header="Empty", message="Unknown audio codec: " + chaninfo.getAudioCodec())
-            return oc
-            
         brate = None
         aratio = None
         vpix = None
@@ -199,20 +213,20 @@ def ShowTunedTV(guideno,include_container=False,plat=None):
         if chaninfo.getHD() == 1:
             aratio = "1.78"
             vpix = 1080
-            if vcodec == "mpeg2video":
+            if vcodec == "mpeg2video" or vcodec == "mpeg1video":
                 brate = 13000
             else:
                 brate = 4000
         else:
             aratio = "1.33"
             vpix = 480
-            if vcodec == "mpeg2video":
-                brate = 13000
-            else:
+            if vcodec == "mpeg2video" or vcodec == "mpeg1video":
                 brate = 4000
+            else:
+                brate = 1500
             
         obj = EpisodeObject(
-            key=Callback(ShowTunedTV,guideno=guideno,include_container=True,plat=plat),
+            key=Callback(ShowTunedTV,guideno=guideno,include_container=True),
             url=liveurl,
             title=p_title,
             source_title=p_stitle,
@@ -242,90 +256,105 @@ def ShowTunedTV(guideno,include_container=False,plat=None):
         else:
             return obj
     else:
-        return ObjectContainer(header="Empty", message="Unknown error fetching program")
+        msg = "Unknown error fetching program info"
+        Log.Critical(msg)
+        return ObjectContainer(header="Empty", message=msg)
+
 
 @route(PREFIX + '/showrecording')
-def ShowRecording(recprogkey,include_container=False,plat=None):
+def ShowRecording(recprogkey,include_container=False):
     global pyhdhr
     if not pyhdhr:
         pyhdhr = PyHDHR()
     
-    if not plat:
-        plat = Client.Platform
-
     prog = pyhdhr.getRecordedProgram(recprogkey)
     if prog:
         chaninfo = pyhdhr.getChannelInfo(prog.getChannelNumber())
         
-        vcodec = ""
-        if chaninfo.getVideoCodec() == "MPEG2":
-            vcodec = "mpeg2video"
-        elif chaninfo.getVideoCodec() == "H264":
-            vcodec = "H.264"
-        else:
-            Log.Critical("Unknown video codec")
-            oc = ObjectContainer(header="Empty", message="Unknown video codec")
-            return oc
+        if chaninfo:
+            vcodec = ""
+            acodec = ""
+            
+            t = chaninfo.getTuner()
+            if t.getModelNumber() == "HDTC-2US":
+                vcodec = "mpeg1video"
+                acodec = "ac3"
+            else:
+                if chaninfo.getVideoCodec() == "MPEG2":
+                    vcodec = "mpeg2video"
+                elif chaninfo.getVideoCodec() == "H264":
+                    vcodec = "H.264"
+                else:
+                    msg = "Unknown video codec: " + chaninfo.getVideoCodec()
+                    Log.Critical(msg)
+                    return ObjectContainer(header="Empty", message=msg)
 
-        acodec = ""
-        if chaninfo.getAudioCodec() == "AAC":
-            acodec = "aac"
-        elif chaninfo.getAudioCodec() == "AC3":
-            acodec = "ac3"
-        else:
-            Log.Critical("Unknown audio codec")
-            oc = ObjectContainer(header="Empty", message="Unknown audio codec")
-            return oc
+                if chaninfo.getAudioCodec() == "AAC":
+                    acodec = "aac"
+                elif chaninfo.getAudioCodec() == "AC3":
+                    acodec = "ac3"
+                else:
+                    msg = "Unknown audio codec: " + chaninfo.getAudioCodec()
+                    Log.Critical(msg)
+                    return ObjectContainer(header="Empty", message=msg)
             
-        brate = None
-        aratio = None
-        vpix = None
+            Log.Debug("Using video codec: " + vcodec + ", audio codec: " + acodec)
         
-        if chaninfo.getHD() == 1:
-            aratio = "1.78"
-            vpix = 1080
-            if vcodec == "mpeg2video":
-                brate = 13000
-            else:
-                brate = 4000
-        else:
-            aratio = "1.33"
-            vpix = 480
-            if vcodec == "mpeg2video":
-                brate = 13000
-            else:
-                brate = 4000
+            brate = None
+            aratio = None
+            vpix = None
             
-        obj = EpisodeObject(
-            key=Callback(ShowRecording,recprogkey=recprogkey,include_container=True,plat=plat),
-            url=prog.getPlayURL(),
-            title=prog.getTitle(),
-            source_title=prog.getEpisodeTitle(),
-            summary=prog.getSynopsis(),
-            duration=((prog.getRecordEndTime() - prog.getRecordStartTime()) * 1000),
-            thumb=prog.getImageURL(),
-            items = [   
-                MediaObject(
-                    parts = [
-                        PartObject(
-                            key=prog.getPlayURL()
-                        )
-                    ],
-                    container = 'mpegts',
-                    video_codec = vcodec,
-                    audio_codec = acodec,
-                    optimized_for_streaming = True,
-                    bitrate = brate,
-                    aspect_ratio=aratio,
-                    video_resolution=vpix
-                )
-            ]  
-        )
-          
-        if include_container:
-            return ObjectContainer(objects=[obj])
+            if chaninfo.getHD() == 1:
+                aratio = "1.78"
+                vpix = 1080
+                if vcodec == "mpeg2video":
+                    brate = 13000
+                else:
+                    brate = 4000
+            else:
+                aratio = "1.33"
+                vpix = 480
+                if vcodec == "mpeg2video":
+                    brate = 13000
+                else:
+                    brate = 4000
+                
+            obj = EpisodeObject(
+                key=Callback(ShowRecording,recprogkey=recprogkey,include_container=True),
+                url=prog.getPlayURL(),
+                title=prog.getTitle(),
+                source_title=prog.getEpisodeTitle(),
+                summary=prog.getSynopsis(),
+                duration=((prog.getRecordEndTime() - prog.getRecordStartTime()) * 1000),
+                thumb=prog.getImageURL(),
+                items = [   
+                    MediaObject(
+                        parts = [
+                            PartObject(
+                                key=prog.getPlayURL()
+                            )
+                        ],
+                        container = 'mpegts',
+                        video_codec = vcodec,
+                        audio_codec = acodec,
+                        optimized_for_streaming = True,
+                        bitrate = brate,
+                        aspect_ratio=aratio,
+                        video_resolution=vpix
+                    )
+                ]  
+            )
+              
+            if include_container:
+                return ObjectContainer(objects=[obj])
+            else:
+                return obj
         else:
-            return obj
+            msg = "Unknown error fetching channel info"
+            Log.Critical(msg)
+            return ObjectContainer(header="Empty", message=msg)
     else:
-        return ObjectContainer(header="Empty", message="Unknown error fetching program")
+        msg = "Unknown error fetching program info"
+        Log.Critical(msg)
+        return ObjectContainer(header="Empty", message=msg)
 
