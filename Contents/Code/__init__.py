@@ -164,6 +164,7 @@ def ShowTunedTV(guideno,include_container=False):
         acodec = ""
         
         t = chaninfo.getTuner()
+        Log.Debug("Tuner: " + t.getModelNumber())
         if t.getModelNumber() == "HDTC-2US":
             vcodec = "mpeg1video"
             acodec = "ac3"
@@ -276,6 +277,7 @@ def ShowRecording(recprogkey,include_container=False):
             acodec = ""
             
             t = chaninfo.getTuner()
+            Log.Debug("Tuner: " + t.getModelNumber())
             if t.getModelNumber() == "HDTC-2US":
                 vcodec = "mpeg1video"
                 acodec = "ac3"
