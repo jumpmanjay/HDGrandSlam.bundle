@@ -831,3 +831,73 @@ class PyHDHR:
             print(type(e))
             print(e)
             return False
+            
+    def discoveryDump(self,filename):
+        f = open(filename,'w')
+        f.write("Full Discovery\n")
+        try:
+            f.write("\nDiscover: "+URL_DISCOVER+"\n")
+            response = urllib.urlopen(URL_DISCOVER)
+            data = json.loads(response.read())
+            f.write("\nRAW:\n"+str(data)+"\n\nFormatted:\n")
+            for item in data:
+                for key in item:
+                    try:
+                        f.write(str(key)+" => "+str(item[key])+"\n")
+                    except Exception as e:
+                        f.write("[error decoding]"+"\n")
+
+                if 'StorageID' in item and 'StorageURL' in item and 'DiscoverURL' in item:
+                    #DVR
+                    f.write("\nDiscover DVR: "+item['DiscoverURL']+"\n")
+                    response1 = urllib.urlopen(item['DiscoverURL'])
+                    data1 = json.loads(response1.read())
+                    f.write("\nRAW:\n"+str(data1)+"\n\nFormatted:\n")
+                    for key1 in data1:
+                        try:
+                            f.write(str(key1)+" => "+str(data1[key1])+"\n")
+                        except Exception as e:
+                            f.write("[error decoding]"+"\n")
+                            
+                    f.write("\nDiscover DVR Storage: "+item['StorageURL']+"\n")
+                    response1 = urllib.urlopen(item['StorageURL'])
+                    data1 = json.loads(response1.read())
+                    f.write("\nRAW:\n"+str(data1)+"\n\nFormatted:\n")
+                    for item1 in data1:
+                        for key1 in item1:
+                            try:
+                                f.write(str(key1)+" => "+str(item1[key1])+"\n")
+                            except Exception as e:
+                                f.write("[error decoding]"+"\n")
+                        f.write("\n")
+                        
+                elif 'DeviceID' in item and 'LineupURL' in item and 'DiscoverURL' in item:
+                    #Tuner
+                    f.write("\nDiscover Tuner: "+item['DiscoverURL']+"\n")
+                    response1 = urllib.urlopen(item['DiscoverURL'])
+                    data1 = json.loads(response1.read())
+                    f.write("\nRAW:\n"+str(data1)+"\n\nFormatted:\n")
+                    for key1 in data1:
+                        try:
+                            f.write(str(key1)+" => "+str(data1[key1])+"\n")
+                        except Exception as e:
+                            f.write("[error decoding]"+"\n")
+                            
+                    f.write("\nDiscover Tuner Lineup: "+item['LineupURL']+"\n")
+                    response1 = urllib.urlopen(item['LineupURL'])
+                    data1 = json.loads(response1.read())
+                    f.write("\nRAW:\n"+str(data1)+"\n\nFormatted:\n")
+                    for item1 in data1:
+                        for key1 in item1:
+                            try:
+                                f.write(str(key1)+" => "+str(item1[key1])+"\n")
+                            except Exception as e:
+                                f.write("[error decoding]"+"\n")
+                        f.write("\n")
+                else:
+                    print "ERROR: could not determine device type - " + str(item)
+        except Exception as e:
+            print "PyHDHR.discover"
+            print(type(e))
+            print(e)
+        
