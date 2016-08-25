@@ -6,6 +6,7 @@ import json
 import os
 from decimal import Decimal
 import operator
+import re
 
 URL_DISCOVER = 'http://my.hdhomerun.com/discover'
 URL_GUIDE_BASE = 'http://my.hdhomerun.com/api/guide.php?DeviceAuth='
@@ -447,6 +448,8 @@ class Tuner(BaseDevice):
     ConditionalAccess = ""
     ChannelInfos = {}
     LastDiscover = 0
+    LastTranscodeOptionDiscover = 0
+    TranscodeOption = None
     
     def __init__(self,PyHDHR):
         self.PyHDHR = PyHDHR
@@ -492,11 +495,35 @@ class Tuner(BaseDevice):
         
     def getChannelInfos(self):
         return self.ChannelInfos
+        
+    def getTranscodeOption(self):
+        if time.time() - self.LastTranscodeOptionDiscover < 60 and self.TranscodeOption:
+            return self.TranscodeOption
+
+        self.LastTranscodeOptionDiscover = time.time()
+
+        if self.ModelNumber == "HDTC-2US":
+            try:
+                regx = Regex('/([0-9]+.[0-9]+.[0-9]+.[0-9]+)').search(self.DiscoverURL)
+                ip = regx.group(1)                
+                
+                response = urllib.urlopen("http://"+ip+"/transcode.html")
+
+                regx = Regex('transcodeChanged\(\)">((.|\n)+?)</select>').search(response.read())
+                selecttags = regx.group(1)
+
+                regx = Regex('.+"(.*)".+selected=').search(selecttags)
+                self.TranscodeOption = regx.group(1)
+            except Exception as e:
+                pass
+        return self.TranscodeOption
 
     def discover(self):
         if time.time() - self.LastDiscover < 60:
             return True
 
+        self.LastDiscover = time.time()
+        
         try:
             response = urllib.urlopen(self.DiscoverURL)
             data = json.loads(response.read())
