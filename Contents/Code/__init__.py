@@ -165,10 +165,23 @@ def ShowTunedTV(guideno,include_container=False):
         
         t = chaninfo.getTuner()
         Log.Debug("Tuner: " + t.getModelNumber())
+        
         if t.getModelNumber() == "HDTC-2US":
-            vcodec = "mpeg1video"
-            acodec = "ac3"
-            liveurl = liveurl + "?transcode=none"
+            transcodeoption = t.getTranscodeOption()
+            if not transcodeoption:
+                Log.Debug("Could not get tuner transcode option, using none")
+                vcodec = "mpeg2video"
+                acodec = "ac3"
+                liveurl = liveurl + "?transcode=none"
+            else:                
+                Log.Debug("Tuner transcode option: " + transcodeoption)
+                if transcodeoption == "none":
+                    vcodec = "mpeg2video"
+                    acodec = "ac3"
+                else:
+                    vcodec = "H.264"
+                    acodec = "ac3"
+                liveurl = liveurl + "?transcode="+transcodeoption
         else:
             if chaninfo.getVideoCodec() == "MPEG2":
                 vcodec = "mpeg2video"
@@ -278,9 +291,21 @@ def ShowRecording(recprogkey,include_container=False):
             
             t = chaninfo.getTuner()
             Log.Debug("Tuner: " + t.getModelNumber())
+            
             if t.getModelNumber() == "HDTC-2US":
-                vcodec = "mpeg1video"
-                acodec = "ac3"
+                transcodeoption = t.getTranscodeOption()
+                if not transcodeoption:
+                    Log.Debug("Could not get tuner transcode option, using none")
+                    vcodec = "mpeg2video"
+                    acodec = "ac3"
+                else:                
+                    Log.Debug("Tuner transcode option: " + transcodeoption)
+                    if transcodeoption == "none":
+                        vcodec = "mpeg2video"
+                        acodec = "ac3"
+                    else:
+                        vcodec = "H.264"
+                        acodec = "ac3"
             else:
                 if chaninfo.getVideoCodec() == "MPEG2":
                     vcodec = "mpeg2video"
