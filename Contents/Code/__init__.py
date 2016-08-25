@@ -116,7 +116,9 @@ def ShowAllRecordings(title):
     rp = pyhdhr.getFilteredRecordedPrograms(SortType.asc,GroupType.All,None)
     if rp:
         for r in rp:
-            oc.add(ShowRecording(recprogkey=r.getProgramID()))
+            obj = ShowRecording(recprogkey=r.getProgramID())
+            if obj:
+                oc.add(obj)
     return oc
     
 @route(PREFIX + '/showrecordingsbyseriesmenu')
@@ -145,7 +147,9 @@ def ShowRecordingsBySeries(title,seriesid):
     rp = pyhdhr.getFilteredRecordedPrograms(SortType.asc,GroupType.SeriesID,seriesid)
     if rp:
         for r in rp:
-            oc.add(ShowRecording(recprogkey=r.getProgramID()))
+            obj = ShowRecording(recprogkey=r.getProgramID())
+            if obj:
+                oc.add(obj)
     return oc
 
 @route(PREFIX + '/showtunedtv')
@@ -160,8 +164,9 @@ def ShowTunedTV(guideno,include_container=False):
     
     chaninfo = pyhdhr.getChannelInfo(guideno)
     if chaninfo:
-        vcodec = ""
-        acodec = ""
+        cont = 'mpegts'
+        vcodec = 'mpeg2video'
+        acodec = 'ac3'
         
         t = chaninfo.getTuner()
         Log.Debug("Tuner: " + t.getModelNumber())
@@ -170,38 +175,39 @@ def ShowTunedTV(guideno,include_container=False):
             transcodeoption = t.getTranscodeOption()
             if not transcodeoption:
                 Log.Debug("Could not get tuner transcode option, using none")
-                vcodec = "mpeg2video"
-                acodec = "ac3"
+                cont = 'mpegts'
+                vcodec = 'mpeg2video'
+                acodec = 'ac3'
                 liveurl = liveurl + "?transcode=none"
             else:                
                 Log.Debug("Tuner transcode option: " + transcodeoption)
                 if transcodeoption == "none":
-                    vcodec = "mpeg2video"
-                    acodec = "ac3"
+                    cont = 'mpegts'
+                    vcodec = 'mpeg2video'
+                    acodec = 'ac3'
                 else:
-                    vcodec = "H.264"
-                    acodec = "ac3"
+                    cont = 'mp4'
+                    vcodec = 'h264'
+                    acodec = 'ac3'
                 liveurl = liveurl + "?transcode="+transcodeoption
         else:
             if chaninfo.getVideoCodec() == "MPEG2":
-                vcodec = "mpeg2video"
+                cont = 'mpegts'
+                vcodec = 'mpeg2video'
             elif chaninfo.getVideoCodec() == "H264":
-                vcodec = "H.264"
+                cont = 'mp4'
+                vcodec = 'h264'
             else:
-                msg = "Unknown video codec: " + chaninfo.getVideoCodec()
+                msg = "Unknown video codec: " + chaninfo.getVideoCodec()+". Using default"
                 Log.Critical(msg)
-                return ObjectContainer(header="Empty", message=msg)
 
             if chaninfo.getAudioCodec() == "AAC":
-                acodec = "aac"
+                acodec = 'aac'
             elif chaninfo.getAudioCodec() == "AC3":
-                acodec = "ac3"
+                acodec = 'ac3'
             else:
-                msg = "Unknown audio codec: " + chaninfo.getAudioCodec()
+                msg = "Unknown audio codec: " + chaninfo.getAudioCodec()+". Using default"
                 Log.Critical(msg)
-                return ObjectContainer(header="Empty", message=msg)
-        
-        Log.Debug("Using video codec: " + vcodec + ", audio codec: " + acodec)
         
         p_title = ""
         p_stitle = ""
@@ -227,18 +233,20 @@ def ShowTunedTV(guideno,include_container=False):
         if chaninfo.getHD() == 1:
             aratio = "1.78"
             vpix = 1080
-            if vcodec == "mpeg2video" or vcodec == "mpeg1video":
+            if vcodec == 'mpeg2video' or vcodec == 'mpeg1video':
                 brate = 13000
             else:
                 brate = 4000
         else:
             aratio = "1.33"
             vpix = 480
-            if vcodec == "mpeg2video" or vcodec == "mpeg1video":
+            if vcodec == 'mpeg2video' or vcodec == 'mpeg1video':
                 brate = 4000
             else:
                 brate = 1500
             
+        Log.Debug("Using the following MediaObject profile:\ncontainer: "+cont+",\nvideo codec: "+vcodec+",\naudio codec: "+acodec+",\nbitrate: "+str(brate)+",\naspect_ratio: "+aratio+",\nvideo_resolution: "+str(vpix))
+        
         obj = EpisodeObject(
             key=Callback(ShowTunedTV,guideno=guideno,include_container=True),
             url=liveurl,
@@ -254,7 +262,7 @@ def ShowTunedTV(guideno,include_container=False):
                             key=liveurl
                         )
                     ],
-                    container = 'mpegts',
+                    container = cont,
                     video_codec = vcodec,
                     audio_codec = acodec,
                     optimized_for_streaming = True,
@@ -270,10 +278,9 @@ def ShowTunedTV(guideno,include_container=False):
         else:
             return obj
     else:
-        msg = "Unknown error fetching program info"
+        msg = "Unknown error fetching channel info for ChannelNumber: "+guideno
         Log.Critical(msg)
         return ObjectContainer(header="Empty", message=msg)
-
 
 @route(PREFIX + '/showrecording')
 def ShowRecording(recprogkey,include_container=False):
@@ -283,12 +290,16 @@ def ShowRecording(recprogkey,include_container=False):
     
     prog = pyhdhr.getRecordedProgram(recprogkey)
     if prog:
-        chaninfo = pyhdhr.getChannelInfo(prog.getChannelNumber())
         
+        cont = 'mpegts'
+        vcodec = 'mpeg2video'
+        acodec = 'ac3'
+        brate = 13000
+        aratio = "1.78"
+        vpix = 1080
+        
+        chaninfo = pyhdhr.getChannelInfo(prog.getChannelNumber())
         if chaninfo:
-            vcodec = ""
-            acodec = ""
-            
             t = chaninfo.getTuner()
             Log.Debug("Tuner: " + t.getModelNumber())
             
@@ -296,92 +307,89 @@ def ShowRecording(recprogkey,include_container=False):
                 transcodeoption = t.getTranscodeOption()
                 if not transcodeoption:
                     Log.Debug("Could not get tuner transcode option, using none")
-                    vcodec = "mpeg2video"
-                    acodec = "ac3"
+                    vcodec = 'mpeg2video'
+                    acodec = 'ac3'
                 else:                
                     Log.Debug("Tuner transcode option: " + transcodeoption)
                     if transcodeoption == "none":
-                        vcodec = "mpeg2video"
-                        acodec = "ac3"
+                        cont = 'mpegts'
+                        vcodec = 'mpeg2video'
+                        acodec = 'ac3'
                     else:
-                        vcodec = "H.264"
-                        acodec = "ac3"
+                        cont = 'mp4'
+                        vcodec = 'h264'
+                        acodec = 'ac3'
             else:
                 if chaninfo.getVideoCodec() == "MPEG2":
-                    vcodec = "mpeg2video"
+                    cont = 'mpegts'
+                    vcodec = 'mpeg2video'
                 elif chaninfo.getVideoCodec() == "H264":
-                    vcodec = "H.264"
+                    cont = 'mp4'
+                    vcodec = 'h264'
                 else:
-                    msg = "Unknown video codec: " + chaninfo.getVideoCodec()
+                    msg = "Unknown video codec: " + chaninfo.getVideoCodec()+". Using default"
                     Log.Critical(msg)
-                    return ObjectContainer(header="Empty", message=msg)
 
                 if chaninfo.getAudioCodec() == "AAC":
-                    acodec = "aac"
+                    acodec = 'aac'
                 elif chaninfo.getAudioCodec() == "AC3":
-                    acodec = "ac3"
+                    acodec = 'ac3'
                 else:
-                    msg = "Unknown audio codec: " + chaninfo.getAudioCodec()
+                    msg = "Unknown audio codec: " + chaninfo.getAudioCodec()+". Using default"
                     Log.Critical(msg)
-                    return ObjectContainer(header="Empty", message=msg)
-            
-            Log.Debug("Using video codec: " + vcodec + ", audio codec: " + acodec)
-        
-            brate = None
-            aratio = None
-            vpix = None
             
             if chaninfo.getHD() == 1:
                 aratio = "1.78"
                 vpix = 1080
-                if vcodec == "mpeg2video":
+                if vcodec == 'mpeg2video':
                     brate = 13000
                 else:
                     brate = 4000
             else:
                 aratio = "1.33"
                 vpix = 480
-                if vcodec == "mpeg2video":
+                if vcodec == 'mpeg2video':
                     brate = 13000
                 else:
                     brate = 4000
-                
-            obj = EpisodeObject(
-                key=Callback(ShowRecording,recprogkey=recprogkey,include_container=True),
-                url=prog.getPlayURL(),
-                title=prog.getTitle(),
-                source_title=prog.getEpisodeTitle(),
-                summary=prog.getSynopsis(),
-                duration=((prog.getRecordEndTime() - prog.getRecordStartTime()) * 1000),
-                thumb=prog.getImageURL(),
-                items = [   
-                    MediaObject(
-                        parts = [
-                            PartObject(
-                                key=prog.getPlayURL()
-                            )
-                        ],
-                        container = 'mpegts',
-                        video_codec = vcodec,
-                        audio_codec = acodec,
-                        optimized_for_streaming = True,
-                        bitrate = brate,
-                        aspect_ratio=aratio,
-                        video_resolution=vpix
-                    )
-                ]  
-            )
-              
-            if include_container:
-                return ObjectContainer(objects=[obj])
-            else:
-                return obj
         else:
-            msg = "Unknown error fetching channel info"
+            msg = "Error fetching channel info for ChannelNumber: "+str(prog.getChannelNumber())+". Most likely, the tuner or the channel on the tuner this was recorded on is no longer in the lineup. Using default values- cross your fingers."
             Log.Critical(msg)
-            return ObjectContainer(header="Empty", message=msg)
+
+        Log.Debug("Using the following MediaObject profile:\ncontainer: "+cont+",\nvideo codec: "+vcodec+",\naudio codec: "+acodec+",\nbitrate: "+str(brate)+",\naspect_ratio: "+aratio+",\nvideo_resolution: "+str(vpix))
+                
+        obj = EpisodeObject(
+            key=Callback(ShowRecording,recprogkey=recprogkey,include_container=True),
+            url=prog.getPlayURL(),
+            title=prog.getTitle(),
+            source_title=prog.getEpisodeTitle(),
+            summary=prog.getSynopsis(),
+            duration=((prog.getRecordEndTime() - prog.getRecordStartTime()) * 1000),
+            thumb=prog.getImageURL(),
+            items = [   
+                MediaObject(
+                    parts = [
+                        PartObject(
+                            key=prog.getPlayURL()
+                        )
+                    ],
+                    container = cont,
+                    video_codec = vcodec,
+                    audio_codec = acodec,
+                    optimized_for_streaming = True,
+                    bitrate = brate,
+                    aspect_ratio=aratio,
+                    video_resolution=vpix
+                )
+            ]  
+        )
+          
+        if include_container:
+            return ObjectContainer(objects=[obj])
+        else:
+            return obj
     else:
-        msg = "Unknown error fetching program info"
+        msg = "Unknown error fetching program info for ProgramID: "+recprogkey
         Log.Critical(msg)
-        return ObjectContainer(header="Empty", message=msg)
+        return None
 
