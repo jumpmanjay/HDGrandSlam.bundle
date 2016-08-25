@@ -8,6 +8,33 @@ from decimal import Decimal
 import operator
 import re
 
+try:
+  Log
+except NameError:
+    class Logger:
+        def __init__(self):
+            return
+        
+        def Debug(self, s):
+            print(s)
+
+        def Info(self, s):
+            print(s)
+
+        def Warn(self, s):
+            print(s)
+          
+        def Error(self, s):
+            print(s)
+
+        def Critical(self, s):
+            print(s)
+
+        def Exception(self, s):
+            print(s)
+        
+    Log = Logger()
+        
 URL_DISCOVER = 'http://my.hdhomerun.com/discover'
 URL_GUIDE_BASE = 'http://my.hdhomerun.com/api/guide.php?DeviceAuth='
 URL_RECORDING_RULES = 'http://my.hdhomerun.com/api/recording_rules?DeviceAuth='
@@ -544,9 +571,9 @@ class Tuner(BaseDevice):
                 self.ConditionalAccess = data['ConditionalAccess']
             return True
         except Exception as e:
-            print "Tuner.discover"
-            print(type(e))
-            print(e)
+            Log.Critical("Exception in Tuner.discover")
+            Log.Critical(type(e))
+            Log.Critical(e)
             return False
 
     def processLineup(self,PyHDHR):
@@ -565,9 +592,9 @@ class Tuner(BaseDevice):
                     PyHDHR.registerChannelInfo(self.ChannelInfos[item['GuideNumber']],self)
             return True
         except Exception as e:
-            print "Tuner.processLineup"
-            print(type(e))
-            print(e)
+            Log.Critical("Exception in Tuner.processLineup")
+            Log.Critical(type(e))
+            Log.Critical(e)
             return False
 
     def processGuide(self,PyHDHR):
@@ -587,9 +614,9 @@ class Tuner(BaseDevice):
                     PyHDHR.registerChannelInfo(self.ChannelInfos[item['GuideNumber']],self)
             return True
         except Exception as e:
-            print "Tuner.processGuide"
-            print(type(e))
-            print(e)
+            Log.Critical("Exception in Tuner.processGuide")
+            Log.Critical(type(e))
+            Log.Critical(e)
             return False
 
 class DVR(BaseDevice):
@@ -641,9 +668,9 @@ class DVR(BaseDevice):
                 self.FriendlyName = data['FriendlyName']
             return True
         except Exception as e:
-            print "DVR.discover"
-            print(type(e))
-            print(e)
+            Log.Critical("Exception in DVR.discover")
+            Log.Critical(type(e))
+            Log.Critical(e)
             return False
         
 class PyHDHR:
@@ -746,9 +773,9 @@ class PyHDHR:
                     self.RecordedPrograms[recprog.getProgramID()] = recprog
                 return self.RecordedPrograms
             except Exception as e:
-                print "PyHDHR.getRecordedPrograms"
-                print(type(e))
-                print(e)
+                Log.Critical("Exception in PyHDHR.getRecordedPrograms")
+                Log.Critical(type(e))
+                Log.Critical(e)
                 return None
 
     def getFilteredRecordedPrograms(self,sortby,grouptype,groupby):
@@ -810,9 +837,9 @@ class PyHDHR:
                         self.RecordingRules[item['RecordingRuleID']] = recordrule
             return True
         except Exception as e:
-            print "PyHDHR.processRecordingRules"
-            print(type(e))
-            print(e)
+            Log.Critical("Exception in PyHDHR.processRecordingRules")
+            Log.Critical(type(e))
+            Log.Critical(e)
             return False
             
     def discover(self,force=False):
@@ -851,12 +878,12 @@ class PyHDHR:
                         tuner.processGuide(self)
                         self.Tuners[item['DeviceID']] = tuner
                 else:
-                    print "ERROR: could not determine device type - " + str(item)
+                    Log.Debug("PyHDHR.discover - could not determine device type - " + str(item))
             return True
         except Exception as e:
-            print "PyHDHR.discover"
-            print(type(e))
-            print(e)
+            Log.Critical("Exception in PyHDHR.discover")
+            Log.Critical(type(e))
+            Log.Critical(e)
             return False
             
     def discoveryDump(self,filename):
@@ -922,9 +949,9 @@ class PyHDHR:
                                 f.write("[error decoding]"+"\n")
                         f.write("\n")
                 else:
-                    print "ERROR: could not determine device type - " + str(item)
+                    Log.Debug("PyHDHR.discoveryDump - could not determine device type - " + str(item))
         except Exception as e:
-            print "PyHDHR.discover"
-            print(type(e))
-            print(e)
+            Log.Critical("Exception in PyHDHR.discoveryDump")
+            Log.Critical(type(e))
+            Log.Critical(e)
         
