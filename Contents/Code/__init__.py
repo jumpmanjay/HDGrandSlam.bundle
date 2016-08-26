@@ -15,6 +15,12 @@ ICON_LIVETV = 'livetv.png'
 ICON_RECORDINGS = 'recordings.png'
 ICON_FAVORITES = 'favorites.png'
 ICON_ALLCHANNELS = 'allchannels.png'
+ICON_SEARCH = 'search.png'
+ICON_SETTINGS = 'settings.png'
+ICON_UNKNOWN = 'unknown.png'
+ICON_BROKEN = 'broken.png'
+ICON_RECORDEDBYSERIES = 'recordedbyseries.png'
+ICON_ALLRECORDED = 'allrecorded.png'
 
 def Start():
     ObjectContainer.title1 = TITLE
@@ -30,18 +36,19 @@ def MainMenu():
     pyhdhr = PyHDHR()
     
     oc = ObjectContainer()
-    oc.add(DirectoryObject(key=Callback(ShowLiveTV, title="Live TV"), title="Live TV", thumb=R(ICON_LIVETV)))
-    oc.add(DirectoryObject(key=Callback(ShowMainRecordingsMenu, title="Recordings"), title="Recordings", thumb=R(ICON_RECORDINGS)))
-    #oc.add(SearchDirectoryObject(name="HDGrandSlam.All"))
+    oc.add(DirectoryObject(key=Callback(ShowLiveTV, title=L('LiveTV')), title=L('LiveTV'), thumb=R(ICON_LIVETV)))
+    oc.add(DirectoryObject(key=Callback(ShowMainRecordingsMenu, title=L('Recordings')), title=L('Recordings'), thumb=R(ICON_RECORDINGS)))
+    oc.add(InputDirectoryObject(key=Callback(SearchAll), title=L('SearchAll'), thumb=R(ICON_SEARCH)))
+    oc.add(PrefsObject(title=L('Settings'), thumb=R(ICON_SETTINGS)))
     return oc
 
 @route(PREFIX + '/showlivetv')
 def ShowLiveTV(title):
     oc = ObjectContainer(title2=title)
-    oc.add(DirectoryObject(key=Callback(ShowFavoriteChannels, title="Favorite Channels"), title="Favorite Channels", thumb=R(ICON_FAVORITES)))
-    oc.add(DirectoryObject(key=Callback(ShowAllChannels, title="All Channels"), title="All Channels", thumb=R(ICON_ALLCHANNELS)))
-    oc.add(DirectoryObject(key=Callback(ShowWhatsOn, title="What's On"), title="What's On", thumb=R(ICON_LIVETV)))
-    #oc.add(SearchDirectoryObject(name="HDGrandSlam.LiveTV"))
+    oc.add(DirectoryObject(key=Callback(ShowFavoriteChannels, title=L('FavoriteChannels')), title=L('FavoriteChannels'), thumb=R(ICON_FAVORITES)))
+    oc.add(DirectoryObject(key=Callback(ShowAllChannels, title=L('AllChannels')), title=L('AllChannels'), thumb=R(ICON_ALLCHANNELS)))
+    oc.add(DirectoryObject(key=Callback(ShowWhatsOn, title=L('WhatsOn')), title=L('WhatsOn'), thumb=R(ICON_LIVETV)))
+    oc.add(InputDirectoryObject(key=Callback(SearchLiveTV), title=L('SearchLiveTV'), thumb=R(ICON_SEARCH)))
     return oc
 
 @route(PREFIX + '/showfavoritechannels')
@@ -56,7 +63,7 @@ def ShowFavoriteChannels(title):
     for line in cl:
         chan = pyhdhr.getChannelInfo(str(line))
         if chan.getFavorite() == 1:
-            oc.add(DirectoryObject(key=Callback(ShowTunedTVStaged,title=str(line),guideno=str(line)), title=str(line),thumb=chan.getImageURL()))
+            oc.add(DirectoryObject(key=Callback(ShowTunedTVStaged,title=str(line),guideno=str(line)), title=str(line),thumb=(chan.getImageURL() if chan.getImageURL() else R(ICON_BROKEN))))
     return oc
 
 @route(PREFIX + '/showallchannels')
@@ -70,7 +77,7 @@ def ShowAllChannels(title):
     cl = pyhdhr.getChannelList()
     for line in cl:
         chan = pyhdhr.getChannelInfo(str(line))
-        oc.add(DirectoryObject(key=Callback(ShowTunedTVStaged,title=str(line),guideno=str(line)), title=str(line),thumb=chan.getImageURL()))
+        oc.add(DirectoryObject(key=Callback(ShowTunedTVStaged,title=str(line),guideno=str(line)), title=str(line),thumb=(chan.getImageURL() if chan.getImageURL() else R(ICON_BROKEN))))
     return oc
 
 @route(PREFIX + '/showwhatson')
@@ -83,7 +90,7 @@ def ShowWhatsOn(title):
     
     progs = pyhdhr.getWhatsOn()
     for guideno in progs:
-        oc.add(TVShowObject(key=Callback(ShowTunedTVStaged, title=str(progs[guideno].getTitle() + " - " + progs[guideno].getEpisodeTitle()),guideno=guideno), title=str(progs[guideno].getTitle() + " - " + progs[guideno].getEpisodeTitle()), thumb=progs[guideno].getImageURL(),rating_key=progs[guideno].getSeriesID()))
+        oc.add(DirectoryObject(key=Callback(ShowTunedTVStaged, title=str(progs[guideno].getTitle() + " - " + progs[guideno].getEpisodeTitle()),guideno=guideno), title=str(progs[guideno].getTitle() + " - " + progs[guideno].getEpisodeTitle()), thumb=(progs[guideno].getImageURL() if progs[guideno].getImageURL() else R(ICON_UNKNOWN))))
     return oc
     
 @route(PREFIX + '/showtunedtvstaged')
@@ -92,17 +99,12 @@ def ShowTunedTVStaged(title,guideno):
     oc.add(ShowTunedTV(guideno=guideno))
     return oc
 
-@route(PREFIX + '/viewchannel')
-def ViewChannel(title):
-    oc = ObjectContainer(header="Empty", message="Unable to display videos for this show right now.")      
-    return oc
-
 @route(PREFIX + '/showmainrecordingsmenu')
 def ShowMainRecordingsMenu(title):
     oc = ObjectContainer(title2=title)
-    oc.add(DirectoryObject(key=Callback(ShowAllRecordings, title="All Recordings"), title="All Recordings", thumb='https://www.silicondust.com/wp-content/uploads/2016/03/dvr-logo.png'))
-    oc.add(DirectoryObject(key=Callback(ShowRecordingsBySeriesMenu, title="By Series"), title="By Series", thumb='https://www.silicondust.com/wp-content/uploads/2016/03/dvr-logo.png'))
-    #oc.add(SearchDirectoryObject(name="HDGrandSlam.Recorded"))
+    oc.add(DirectoryObject(key=Callback(ShowAllRecordings, title=L('AllRecordings')), title=L('AllRecordings'), thumb=R(ICON_ALLRECORDED)))
+    oc.add(DirectoryObject(key=Callback(ShowRecordingsBySeriesMenu, title=L('BySeries')), title=L('BySeries'), thumb=R(ICON_RECORDEDBYSERIES)))
+    oc.add(InputDirectoryObject(key=Callback(SearchRecorded), title=L('SearchRecorded'), thumb=R(ICON_SEARCH)))
     return oc
 
 @route(PREFIX + '/showallrecordings')
@@ -133,7 +135,7 @@ def ShowRecordingsBySeriesMenu(title):
     
     if series:
         for titlekey in sorted(series):
-            oc.add(TVShowObject(key=Callback(ShowRecordingsBySeries, title=str(titlekey), seriesid=series[titlekey].getSeriesID()), title=str(titlekey), thumb=series[titlekey].getImageURL(),episode_count=(series[titlekey].getEpisodeCount()-1),rating_key=series[titlekey].getSeriesID()))
+            oc.add(TVShowObject(key=Callback(ShowRecordingsBySeries, title=str(titlekey), seriesid=series[titlekey].getSeriesID()), title=str(titlekey), thumb=(series[titlekey].getImageURL() if series[titlekey].getImageURL() else R(ICON_UNKNOWN)),episode_count=(series[titlekey].getEpisodeCount()-1),rating_key=series[titlekey].getSeriesID()))
     return oc
 
 @route(PREFIX + '/showrecordingsbyseries')
@@ -150,6 +152,58 @@ def ShowRecordingsBySeries(title,seriesid):
             obj = ShowRecording(recprogkey=r.getProgramID())
             if obj:
                 oc.add(obj)
+    return oc
+
+@route(PREFIX + '/searchall')
+def SearchAll(query):
+    global pyhdhr
+    oc = ObjectContainer(title2="search all...")
+    
+    if not pyhdhr:
+        pyhdhr = PyHDHR()
+
+    progs = pyhdhr.searchWhatsOn(query)
+
+    if len(progs) > 0:
+        for guideno in progs:
+            oc.add(TVShowObject(key=Callback(ShowTunedTVStaged, title=str(progs[guideno].getTitle() + " - " + progs[guideno].getEpisodeTitle()),guideno=guideno), title=str(progs[guideno].getTitle() + " - " + progs[guideno].getEpisodeTitle()), thumb=(progs[guideno].getImageURL() if progs[guideno].getImageURL() else R(ICON_UNKNOWN)),rating_key=progs[guideno].getSeriesID()))
+
+    progs = pyhdhr.searchRecorded(query)
+
+    if len(progs) > 0:
+        for recprogkey in progs:
+            oc.add(ShowRecording(recprogkey=recprogkey))    
+    oc.objects.sort(key = lambda obj: obj.title)
+    return oc
+
+@route(PREFIX + '/searchlivetv')
+def SearchLiveTV(query):
+    global pyhdhr
+    oc = ObjectContainer(title2="search live tv...")
+    
+    if not pyhdhr:
+        pyhdhr = PyHDHR()
+
+    progs = pyhdhr.searchWhatsOn(query)
+
+    if len(progs) > 0:
+        for guideno in progs:
+            oc.add(TVShowObject(key=Callback(ShowTunedTVStaged, title=str(progs[guideno].getTitle() + " - " + progs[guideno].getEpisodeTitle()),guideno=guideno), title=str(progs[guideno].getTitle() + " - " + progs[guideno].getEpisodeTitle()), thumb=(progs[guideno].getImageURL() if progs[guideno].getImageURL() else R(ICON_UNKNOWN)),rating_key=progs[guideno].getSeriesID()))
+    return oc
+
+@route(PREFIX + '/searchrecorded')
+def SearchRecorded(query):
+    global pyhdhr
+    oc = ObjectContainer(title2='Search Results for \''+str(query)+'\'')
+    
+    if not pyhdhr:
+        pyhdhr = PyHDHR()
+
+    progs = pyhdhr.searchRecorded(query)
+
+    if len(progs) > 0:
+        for recprogkey in progs:
+            oc.add(ShowRecording(recprogkey=recprogkey))    
     return oc
 
 @route(PREFIX + '/showtunedtv')
@@ -172,24 +226,20 @@ def ShowTunedTV(guideno,include_container=False):
         Log.Debug("Tuner: " + t.getModelNumber())
         
         if t.getModelNumber() == "HDTC-2US":
-            transcodeoption = t.getTranscodeOption()
-            if not transcodeoption:
-                Log.Debug("Could not get tuner transcode option, using none")
-                cont = 'mpegts'
-                vcodec = 'mpeg2video'
-                acodec = 'ac3'
-                liveurl = liveurl + "?transcode=none"
-            else:                
-                Log.Debug("Tuner transcode option: " + transcodeoption)
-                if transcodeoption == "none":
-                    cont = 'mpegts'
-                    vcodec = 'mpeg2video'
-                    acodec = 'ac3'
+            if Prefs['UseDefaultTranscoding'] == True:
+                transcodeoption = t.getTranscodeOption()
+                if not transcodeoption:
+                    liveurl = liveurl + "?transcode=none"
+                    Log.Debug("Could not get tuner transcode option, using none")
                 else:
-                    cont = 'mp4'
-                    vcodec = 'h264'
-                    acodec = 'ac3'
-                liveurl = liveurl + "?transcode="+transcodeoption
+                    Log.Debug("Tuner transcode option: " + transcodeoption)
+                    if transcodeoption != "none":
+                        cont = 'mp4'
+                        vcodec = 'h264'
+                        acodec = 'ac3'
+                    liveurl = liveurl + "?transcode="+transcodeoption
+            else:
+                liveurl = liveurl + "?transcode=none"
         else:
             if chaninfo.getVideoCodec() == "MPEG2":
                 cont = 'mpegts'
@@ -254,7 +304,7 @@ def ShowTunedTV(guideno,include_container=False):
             source_title=p_stitle,
             summary=p_synopsis,
             duration=14400000,
-            thumb=p_imageurl,
+            thumb=(p_imageurl if p_imageurl else R(ICON_UNKNOWN)),
             items = [   
                 MediaObject(
                     parts = [
@@ -365,7 +415,7 @@ def ShowRecording(recprogkey,include_container=False):
             source_title=prog.getEpisodeTitle(),
             summary=prog.getSynopsis(),
             duration=((prog.getRecordEndTime() - prog.getRecordStartTime()) * 1000),
-            thumb=prog.getImageURL(),
+            thumb=(prog.getImageURL() if prog.getImageURL() else R(ICON_UNKNOWN)),
             items = [   
                 MediaObject(
                     parts = [
