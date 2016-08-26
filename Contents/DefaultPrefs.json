@@ -1,0 +1,8 @@
+[
+	{
+		"id": "UseDefaultTranscoding",
+		"label": "Use configured default transcoding profile on Extend tuners for live TV",
+		"type": "bool",
+		"default": "false"
+	}
+]
