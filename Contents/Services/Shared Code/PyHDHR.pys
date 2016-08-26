@@ -39,6 +39,12 @@ URL_DISCOVER = 'http://my.hdhomerun.com/discover'
 URL_GUIDE_BASE = 'http://my.hdhomerun.com/api/guide.php?DeviceAuth='
 URL_RECORDING_RULES = 'http://my.hdhomerun.com/api/recording_rules?DeviceAuth='
 
+def searchString(needle,haystack):
+    needles = needle.split(' ')
+    for n in needles:
+        if re.search(n, haystack, re.IGNORECASE):
+            return True
+
 class SortType:
     asc = 0
     desc = 1
@@ -572,7 +578,6 @@ class Tuner(BaseDevice):
             return True
         except Exception as e:
             Log.Critical("Exception in Tuner.discover")
-            Log.Critical(type(e))
             Log.Critical(e)
             return False
 
@@ -593,7 +598,6 @@ class Tuner(BaseDevice):
             return True
         except Exception as e:
             Log.Critical("Exception in Tuner.processLineup")
-            Log.Critical(type(e))
             Log.Critical(e)
             return False
 
@@ -615,7 +619,6 @@ class Tuner(BaseDevice):
             return True
         except Exception as e:
             Log.Critical("Exception in Tuner.processGuide")
-            Log.Critical(type(e))
             Log.Critical(e)
             return False
 
@@ -669,7 +672,6 @@ class DVR(BaseDevice):
             return True
         except Exception as e:
             Log.Critical("Exception in DVR.discover")
-            Log.Critical(type(e))
             Log.Critical(e)
             return False
         
@@ -683,6 +685,7 @@ class PyHDHR:
     ChannelArray = []
     ChannelInfos = {}
     LastDiscover = 0
+    LastRecordedDiscover = 0
     RecordedPrograms = {}
     
     def __init__(self):
@@ -760,8 +763,15 @@ class PyHDHR:
                 return chaninfos[guideno].getURL()
         return None
                 
-    def getRecordedPrograms(self):
+    def getRecordedPrograms(self,force=False):
         self.discover()
+        
+        if not force and len(self.RecordedPrograms) != 0:
+            if time.time() - self.LastRecordedDiscover < 60:
+                return self.RecordedPrograms
+            
+        self.LastRecordedDiscover = time.time()
+
         self.RecordedPrograms = {}
         for key in self.DVRs:
             try:
@@ -774,7 +784,6 @@ class PyHDHR:
                 return self.RecordedPrograms
             except Exception as e:
                 Log.Critical("Exception in PyHDHR.getRecordedPrograms")
-                Log.Critical(type(e))
                 Log.Critical(e)
                 return None
 
@@ -782,25 +791,28 @@ class PyHDHR:
         self.discover()
         progs = self.getRecordedPrograms()
         
-        filteredprogs = []
-        for prog in (sorted(progs.values(), key=operator.attrgetter('RecordEndTime'), reverse=(True if sortby == SortType.asc else False))):
-            if grouptype == GroupType.All:
-                filteredprogs.append(prog)
-            elif grouptype == GroupType.SeriesID:
-                if groupby == prog.getSeriesID():
+        if progs:
+            filteredprogs = []
+            for prog in (sorted(progs.values(), key=operator.attrgetter('RecordEndTime'), reverse=(True if sortby == SortType.asc else False))):
+                if grouptype == GroupType.All:
                     filteredprogs.append(prog)
-            elif grouptype == GroupType.Category:
-                if groupby == prog.getCategory():
-                    filteredprogs.append(prog)
-            else:
-                pass
-        return filteredprogs
+                elif grouptype == GroupType.SeriesID:
+                    if groupby == prog.getSeriesID():
+                        filteredprogs.append(prog)
+                elif grouptype == GroupType.Category:
+                    if groupby == prog.getCategory():
+                        filteredprogs.append(prog)
+                else:
+                    pass
+            return filteredprogs
+        return None
     
     def getRecordedProgram(self,key):
         self.discover()
-        self.getRecordedPrograms()
-        if key in self.RecordedPrograms:
-            return self.RecordedPrograms[key]
+        progs = self.getRecordedPrograms()
+        if progs:
+            if key in progs:
+                return progs[key]
         else:
             return None
             
@@ -815,6 +827,41 @@ class PyHDHR:
             else:
                 series[progs[key].getDisplayGroupTitle()].addEpisodeCount(1)
         return series
+        
+    def searchWhatsOn(self,query):
+        self.discover()
+        progs = self.getWhatsOn()
+        
+        foundprogs = {}
+        for key in progs:
+            if(searchString(query,progs[key].getTitle()) or
+                    searchString(query,progs[key].getEpisodeTitle()) or
+                    searchString(query,progs[key].getSynopsis())
+            ):
+                foundprogs[key] = progs[key]
+            else:
+                for filter in progs[key].getProgramFilters():
+                    if searchString(query, filter.getName()):
+                        foundprogs[key] = progs[key]
+                        break
+        return foundprogs
+        
+    def searchRecorded(self,query):
+        self.discover()
+        progs = self.getRecordedPrograms()
+        foundprogs = {}
+        for key in progs:
+            if(searchString(query,progs[key].getTitle()) or
+                    searchString(query,progs[key].getDisplayGroupTitle()) or
+                    searchString(query,progs[key].getEpisodeTitle()) or
+                    searchString(query,progs[key].getSynopsis()) or
+                    searchString(query,progs[key].getChannelNumber()) or
+                    searchString(query,progs[key].getChannelName()) or
+                    searchString(query,progs[key].getChannelAffiliate()) or
+                    searchString(query,progs[key].getCategory())
+            ):
+                foundprogs[key] = progs[key]
+        return foundprogs
         
     def getRecordingRules(self):
         self.discover()
@@ -838,7 +885,6 @@ class PyHDHR:
             return True
         except Exception as e:
             Log.Critical("Exception in PyHDHR.processRecordingRules")
-            Log.Critical(type(e))
             Log.Critical(e)
             return False
             
@@ -882,7 +928,6 @@ class PyHDHR:
             return True
         except Exception as e:
             Log.Critical("Exception in PyHDHR.discover")
-            Log.Critical(type(e))
             Log.Critical(e)
             return False
             
@@ -952,6 +997,4 @@ class PyHDHR:
                     Log.Debug("PyHDHR.discoveryDump - could not determine device type - " + str(item))
         except Exception as e:
             Log.Critical("Exception in PyHDHR.discoveryDump")
-            Log.Critical(type(e))
             Log.Critical(e)
-        
