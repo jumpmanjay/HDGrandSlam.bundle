@@ -13,14 +13,18 @@ Known Supported Clients:
 
 -nVidia ShieldTV
 
+-Nexus Player (Nougat)
+
+-Nexus 6P (Nougat)
+
 
 Known Incompatible Clients:
 
--Nexus 6P
+-Nexus 6P (Marshmallow)
 
 -Nexus 7 (2013)
 
--Nexus Player
+-Nexus Player (Marshmallow)
 
 
 
