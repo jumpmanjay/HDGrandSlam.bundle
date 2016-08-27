@@ -577,7 +577,7 @@ class Tuner(BaseDevice):
                 self.ConditionalAccess = data['ConditionalAccess']
             return True
         except Exception as e:
-            Log.Critical("Exception in Tuner.discover")
+            Log.Critical("Exception in Tuner.discover while attempting to load: "+str(self.DiscoverURL))
             Log.Critical(e)
             return False
 
@@ -597,7 +597,7 @@ class Tuner(BaseDevice):
                     PyHDHR.registerChannelInfo(self.ChannelInfos[item['GuideNumber']],self)
             return True
         except Exception as e:
-            Log.Critical("Exception in Tuner.processLineup")
+            Log.Critical("Exception in Tuner.processLineup while attempting to load: "+str(self.LineupURL))
             Log.Critical(e)
             return False
 
@@ -618,7 +618,7 @@ class Tuner(BaseDevice):
                     PyHDHR.registerChannelInfo(self.ChannelInfos[item['GuideNumber']],self)
             return True
         except Exception as e:
-            Log.Critical("Exception in Tuner.processGuide")
+            Log.Critical("Exception in Tuner.processGuide while attempting to load: "+str(URL_GUIDE_BASE + self.DeviceAuth))
             Log.Critical(e)
             return False
 
@@ -671,7 +671,7 @@ class DVR(BaseDevice):
                 self.FriendlyName = data['FriendlyName']
             return True
         except Exception as e:
-            Log.Critical("Exception in DVR.discover")
+            Log.Critical("Exception in DVR.discover while attempting to load: "+str(self.DiscoverURL))
             Log.Critical(e)
             return False
         
@@ -783,7 +783,7 @@ class PyHDHR:
                     self.RecordedPrograms[recprog.getProgramID()] = recprog
                 return self.RecordedPrograms
             except Exception as e:
-                Log.Critical("Exception in PyHDHR.getRecordedPrograms")
+                Log.Critical("Exception in PyHDHR.getRecordedPrograms while attempting to load: "+str(self.DVRs[key].getStorageURL()))
                 Log.Critical(e)
                 return None
 
@@ -884,7 +884,7 @@ class PyHDHR:
                         self.RecordingRules[item['RecordingRuleID']] = recordrule
             return True
         except Exception as e:
-            Log.Critical("Exception in PyHDHR.processRecordingRules")
+            Log.Critical("Exception in PyHDHR.processRecordingRules while attempting to load: "+str(URL_RECORDING_RULES+self.getDeviceAuth()))
             Log.Critical(e)
             return False
             
@@ -907,27 +907,27 @@ class PyHDHR:
                     else:
                         dvr = DVR()
                         dvr.parse(item)
-                        dvr.discover()
-                        self.DVRs[item['StorageID']] = dvr
+                        if dvr.discover():
+                            self.DVRs[item['StorageID']] = dvr
                 elif 'DeviceID' in item and 'LineupURL' in item:
                     #Tuner
                     if item['DeviceID'] in self.Tuners:
                         self.Tuners[item['DeviceID']].parse(item)
-                        self.Tuners[item['DeviceID']].discover()
-                        self.Tuners[item['DeviceID']].processLineup(self)
-                        self.Tuners[item['DeviceID']].processGuide(self)
+                        if self.Tuners[item['DeviceID']].discover():
+                            self.Tuners[item['DeviceID']].processLineup(self)
+                            self.Tuners[item['DeviceID']].processGuide(self)
                     else:
                         tuner = Tuner(self)
                         tuner.parse(item)
-                        tuner.discover()
-                        tuner.processLineup(self)
-                        tuner.processGuide(self)
-                        self.Tuners[item['DeviceID']] = tuner
+                        if tuner.discover():
+                            tuner.processLineup(self)
+                            tuner.processGuide(self)
+                            self.Tuners[item['DeviceID']] = tuner
                 else:
                     Log.Debug("PyHDHR.discover - could not determine device type - " + str(item))
             return True
         except Exception as e:
-            Log.Critical("Exception in PyHDHR.discover")
+            Log.Critical("Exception in PyHDHR.discover while attempting to load: "+str(URL_DISCOVER))
             Log.Critical(e)
             return False
             
@@ -945,56 +945,68 @@ class PyHDHR:
                         f.write(str(key)+" => "+str(item[key])+"\n")
                     except Exception as e:
                         f.write("[error decoding]"+"\n")
-
                 if 'StorageID' in item and 'StorageURL' in item and 'DiscoverURL' in item:
                     #DVR
                     f.write("\nDiscover DVR: "+item['DiscoverURL']+"\n")
-                    response1 = urllib.urlopen(item['DiscoverURL'])
-                    data1 = json.loads(response1.read())
-                    f.write("\nRAW:\n"+str(data1)+"\n\nFormatted:\n")
-                    for key1 in data1:
-                        try:
-                            f.write(str(key1)+" => "+str(data1[key1])+"\n")
-                        except Exception as e:
-                            f.write("[error decoding]"+"\n")
-                            
-                    f.write("\nDiscover DVR Storage: "+item['StorageURL']+"\n")
-                    response1 = urllib.urlopen(item['StorageURL'])
-                    data1 = json.loads(response1.read())
-                    f.write("\nRAW:\n"+str(data1)+"\n\nFormatted:\n")
-                    for item1 in data1:
-                        for key1 in item1:
+                    try:
+                        response1 = urllib.urlopen(item['DiscoverURL'])
+                        data1 = json.loads(response1.read())
+                        f.write("\nRAW:\n"+str(data1)+"\n\nFormatted:\n")
+                        for key1 in data1:
                             try:
-                                f.write(str(key1)+" => "+str(item1[key1])+"\n")
+                                f.write(str(key1)+" => "+str(data1[key1])+"\n")
                             except Exception as e:
                                 f.write("[error decoding]"+"\n")
-                        f.write("\n")
-                        
+                    except Exception as e:
+                        Log.Critical("Exception in PyHDHR.discoveryDump while attempting to load: "+str(item['DiscoverURL']))
+                        Log.Critical(e)
+                    f.write("\nDiscover DVR Storage: "+item['StorageURL']+"\n")                    
+                    try:
+                        response1 = urllib.urlopen(item['StorageURL'])
+                        data1 = json.loads(response1.read())
+                        f.write("\nRAW:\n"+str(data1)+"\n\nFormatted:\n")
+                        for item1 in data1:
+                            for key1 in item1:
+                                try:
+                                    f.write(str(key1)+" => "+str(item1[key1])+"\n")
+                                except Exception as e:
+                                    f.write("[error decoding]"+"\n")
+                            f.write("\n")
+                    except Exception as e:
+                        Log.Critical("Exception in PyHDHR.discoveryDump while attempting to load: "+str(item['StorageURL']))
+                        Log.Critical(e)
                 elif 'DeviceID' in item and 'LineupURL' in item and 'DiscoverURL' in item:
                     #Tuner
                     f.write("\nDiscover Tuner: "+item['DiscoverURL']+"\n")
-                    response1 = urllib.urlopen(item['DiscoverURL'])
-                    data1 = json.loads(response1.read())
-                    f.write("\nRAW:\n"+str(data1)+"\n\nFormatted:\n")
-                    for key1 in data1:
-                        try:
-                            f.write(str(key1)+" => "+str(data1[key1])+"\n")
-                        except Exception as e:
-                            f.write("[error decoding]"+"\n")
-                            
-                    f.write("\nDiscover Tuner Lineup: "+item['LineupURL']+"\n")
-                    response1 = urllib.urlopen(item['LineupURL'])
-                    data1 = json.loads(response1.read())
-                    f.write("\nRAW:\n"+str(data1)+"\n\nFormatted:\n")
-                    for item1 in data1:
-                        for key1 in item1:
+                    try:
+                        response1 = urllib.urlopen(item['DiscoverURL'])
+                        data1 = json.loads(response1.read())
+                        f.write("\nRAW:\n"+str(data1)+"\n\nFormatted:\n")
+                        for key1 in data1:
                             try:
-                                f.write(str(key1)+" => "+str(item1[key1])+"\n")
+                                f.write(str(key1)+" => "+str(data1[key1])+"\n")
                             except Exception as e:
                                 f.write("[error decoding]"+"\n")
-                        f.write("\n")
+                    except Exception as e:
+                        Log.Critical("Exception in PyHDHR.discoveryDump while attempting to load: "+str(item['DiscoverURL']))
+                        Log.Critical(e)
+                    f.write("\nDiscover Tuner Lineup: "+item['LineupURL']+"\n")
+                    try:
+                        response1 = urllib.urlopen(item['LineupURL'])
+                        data1 = json.loads(response1.read())
+                        f.write("\nRAW:\n"+str(data1)+"\n\nFormatted:\n")
+                        for item1 in data1:
+                            for key1 in item1:
+                                try:
+                                    f.write(str(key1)+" => "+str(item1[key1])+"\n")
+                                except Exception as e:
+                                    f.write("[error decoding]"+"\n")
+                            f.write("\n")
+                    except Exception as e:
+                        Log.Critical("Exception in PyHDHR.discoveryDump while attempting to load: "+str(item['LineupURL']))
+                        Log.Critical(e)
                 else:
                     Log.Debug("PyHDHR.discoveryDump - could not determine device type - " + str(item))
         except Exception as e:
-            Log.Critical("Exception in PyHDHR.discoveryDump")
+            Log.Critical("Exception in PyHDHR.discoveryDump while attempting to load: "+str(URL_DISCOVER))
             Log.Critical(e)
