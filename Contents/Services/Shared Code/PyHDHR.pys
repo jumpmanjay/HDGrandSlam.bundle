@@ -1,7 +1,7 @@
 import time
 import string
 from datetime import datetime
-import urllib
+import urllib2
 import json
 import os
 from decimal import Decimal
@@ -537,10 +537,7 @@ class Tuner(BaseDevice):
 
         if self.ModelNumber == "HDTC-2US":
             try:
-                regx = Regex('/([0-9]+.[0-9]+.[0-9]+.[0-9]+)').search(self.DiscoverURL)
-                ip = regx.group(1)                
-                
-                response = urllib.urlopen("http://"+ip+"/transcode.html")
+                response = urllib2.urlopen(self.BaseURL+"/transcode.html",None,5)
 
                 regx = Regex('transcodeChanged\(\)">((.|\n)+?)</select>').search(response.read())
                 selecttags = regx.group(1)
@@ -558,7 +555,7 @@ class Tuner(BaseDevice):
         self.LastDiscover = time.time()
         
         try:
-            response = urllib.urlopen(self.DiscoverURL)
+            response = urllib2.urlopen(self.DiscoverURL,None,5)
             data = json.loads(response.read())
             if 'TunerCount' in data:
                 self.TunerCount = data['TunerCount']
@@ -584,7 +581,7 @@ class Tuner(BaseDevice):
     def processLineup(self,PyHDHR):
         self.discover()
         try:
-            response = urllib.urlopen(self.LineupURL)
+            response = urllib2.urlopen(self.LineupURL,None,5)
             data = json.loads(response.read())
             for item in data:
                 if 'GuideNumber' in item:
@@ -605,7 +602,7 @@ class Tuner(BaseDevice):
         if not self.DeviceAuth:
             return False
         try:
-            response = urllib.urlopen(URL_GUIDE_BASE + self.DeviceAuth)
+            response = urllib2.urlopen(URL_GUIDE_BASE + self.DeviceAuth,None,5)
             data = json.loads(response.read())
             for item in data:
                 if 'GuideNumber' in item:
@@ -661,7 +658,7 @@ class DVR(BaseDevice):
         
     def discover(self):
         try:
-            response = urllib.urlopen(self.DiscoverURL)
+            response = urllib2.urlopen(self.DiscoverURL,None,5)
             data = json.loads(response.read())
             if 'FreeSpace' in data:
                 self.FreeSpace = data['FreeSpace']
@@ -774,18 +771,18 @@ class PyHDHR:
 
         self.RecordedPrograms = {}
         for key in self.DVRs:
+            Log.Debug("getRecordedPrograms key:"+key)
             try:
-                response = urllib.urlopen(self.DVRs[key].getStorageURL())
+                response = urllib2.urlopen(self.DVRs[key].getStorageURL(),None,5)
                 data = json.loads(response.read())
                 for item in data:
                     recprog = RecordedProgram()
                     recprog.parse(item)
                     self.RecordedPrograms[recprog.getProgramID()] = recprog
-                return self.RecordedPrograms
             except Exception as e:
                 Log.Critical("Exception in PyHDHR.getRecordedPrograms while attempting to load: "+str(self.DVRs[key].getStorageURL()))
                 Log.Critical(e)
-                return None
+        return self.RecordedPrograms
 
     def getFilteredRecordedPrograms(self,sortby,grouptype,groupby):
         self.discover()
@@ -872,7 +869,7 @@ class PyHDHR:
         if not self.getDeviceAuth():
             return False
         try:
-            response = urllib.urlopen(URL_RECORDING_RULES+self.getDeviceAuth())
+            response = urllib2.urlopen(URL_RECORDING_RULES+self.getDeviceAuth(),None,5)
             data = json.loads(response.read())
             for item in data:
                 if 'RecordingRuleID' in item:
@@ -896,7 +893,7 @@ class PyHDHR:
         self.LastDiscover = time.time()
             
         try:
-            response = urllib.urlopen(URL_DISCOVER)
+            response = urllib2.urlopen(URL_DISCOVER,None,5)
             data = json.loads(response.read())
             for item in data:
                 if 'StorageID' in item and 'StorageURL' in item:
@@ -936,7 +933,7 @@ class PyHDHR:
         f.write("Full Discovery\n")
         try:
             f.write("\nDiscover: "+URL_DISCOVER+"\n")
-            response = urllib.urlopen(URL_DISCOVER)
+            response = urllib2.urlopen(URL_DISCOVER,None,5)
             data = json.loads(response.read())
             f.write("\nRAW:\n"+str(data)+"\n\nFormatted:\n")
             for item in data:
@@ -949,7 +946,7 @@ class PyHDHR:
                     #DVR
                     f.write("\nDiscover DVR: "+item['DiscoverURL']+"\n")
                     try:
-                        response1 = urllib.urlopen(item['DiscoverURL'])
+                        response1 = urllib2.urlopen(item['DiscoverURL'],None,5)
                         data1 = json.loads(response1.read())
                         f.write("\nRAW:\n"+str(data1)+"\n\nFormatted:\n")
                         for key1 in data1:
@@ -962,7 +959,7 @@ class PyHDHR:
                         Log.Critical(e)
                     f.write("\nDiscover DVR Storage: "+item['StorageURL']+"\n")                    
                     try:
-                        response1 = urllib.urlopen(item['StorageURL'])
+                        response1 = urllib2.urlopen(item['StorageURL'],None,5)
                         data1 = json.loads(response1.read())
                         f.write("\nRAW:\n"+str(data1)+"\n\nFormatted:\n")
                         for item1 in data1:
@@ -979,7 +976,7 @@ class PyHDHR:
                     #Tuner
                     f.write("\nDiscover Tuner: "+item['DiscoverURL']+"\n")
                     try:
-                        response1 = urllib.urlopen(item['DiscoverURL'])
+                        response1 = urllib2.urlopen(item['DiscoverURL'],None,5)
                         data1 = json.loads(response1.read())
                         f.write("\nRAW:\n"+str(data1)+"\n\nFormatted:\n")
                         for key1 in data1:
@@ -992,7 +989,7 @@ class PyHDHR:
                         Log.Critical(e)
                     f.write("\nDiscover Tuner Lineup: "+item['LineupURL']+"\n")
                     try:
-                        response1 = urllib.urlopen(item['LineupURL'])
+                        response1 = urllib2.urlopen(item['LineupURL'],None,5)
                         data1 = json.loads(response1.read())
                         f.write("\nRAW:\n"+str(data1)+"\n\nFormatted:\n")
                         for item1 in data1:
