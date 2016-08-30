@@ -790,12 +790,25 @@ class PyHDHR:
     def getLiveTVURL(self,guideno):
         self.discover(True)
         for tunerkey in self.Tuners:
-            response = urllib2.urlopen(self.Tuners[tunerkey].getBaseURL()+"/tuners.html",None,5)
-            data = response.read()
-            regx = re.search('<tr><td>.+<td>none</td></tr>',data)
-            if regx != None:
-                chaninfos = self.Tuners[tunerkey].getChannelInfos()
-                if guideno in chaninfos:
+            chaninfos = self.Tuners[tunerkey].getChannelInfos()
+            if guideno in chaninfos:
+                usethis = True
+                try:
+                    response = urllib2.urlopen(chaninfos[guideno].getURL()+"?duration=1",None,5)
+                except urllib2.URLError as e:
+                    Log.Critical("urllib2.URLError: "+str(e))
+                    usethis = False
+                except urllib2.HTTPError as e:
+                    regx = re.search('HTTP Error 503:',e)
+                    if regx != None:
+                        Log.Debug("All tuners in use on "+self.Tuners[tunerkey].getLocalIP())
+                    else:
+                        Log.Critical("urllib2.HTTPError: "+str(e))
+                    usethis = False
+                except Exception as e:
+                    Log.Critical("Exception: "+str(e))
+                    usethis = False
+                if usethis == True:
                     return chaninfos[guideno].getURL()
         return None
                 
