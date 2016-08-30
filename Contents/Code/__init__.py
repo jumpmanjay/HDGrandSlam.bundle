@@ -21,6 +21,8 @@ ICON_UNKNOWN = 'unknown.png'
 ICON_BROKEN = 'broken.png'
 ICON_RECORDEDBYSERIES = 'recordedbyseries.png'
 ICON_ALLRECORDED = 'allrecorded.png'
+ICON_HDCHANNELS = 'hdchannels.png'
+ICON_SDCHANNELS = 'sdchannels.png'
 
 def Start():
     ObjectContainer.title1 = TITLE
@@ -40,6 +42,19 @@ def MainMenu():
     oc.add(DirectoryObject(key=Callback(ShowMainRecordingsMenu, title=L('Recordings')), title=L('Recordings'), thumb=R(ICON_RECORDINGS)))
     oc.add(InputDirectoryObject(key=Callback(SearchAll), title=L('SearchAll'), thumb=R(ICON_SEARCH)))
     oc.add(PrefsObject(title=L('Settings'), thumb=R(ICON_SETTINGS)))
+    debug = Prefs['EnableDebug']
+    if debug:
+        oc.add(PopupDirectoryObject(key=Callback(RunDebug), title=L('RunDebug'), thumb=R(ICON_BROKEN)))
+    return oc
+
+@route(PREFIX + '/rundebug')
+def RunDebug():
+    global pyhdhr
+    if not pyhdhr:
+        pyhdhr = PyHDHR()
+    pyhdhr.discoveryDebug()
+    oc = ObjectContainer(title2=L('DebugDone'))
+    oc.add(DirectoryObject(title=L('DebugDone'),thumb=R(ICON_BROKEN)))
     return oc
 
 @route(PREFIX + '/showlivetv')
@@ -47,6 +62,8 @@ def ShowLiveTV(title):
     oc = ObjectContainer(title2=title)
     oc.add(DirectoryObject(key=Callback(ShowFavoriteChannels, title=L('FavoriteChannels')), title=L('FavoriteChannels'), thumb=R(ICON_FAVORITES)))
     oc.add(DirectoryObject(key=Callback(ShowAllChannels, title=L('AllChannels')), title=L('AllChannels'), thumb=R(ICON_ALLCHANNELS)))
+    oc.add(DirectoryObject(key=Callback(ShowHDChannels, title=L('HDChannels')), title=L('HDChannels'), thumb=R(ICON_HDCHANNELS)))
+    oc.add(DirectoryObject(key=Callback(ShowSDChannels, title=L('SDChannels')), title=L('SDChannels'), thumb=R(ICON_SDCHANNELS)))        
     oc.add(DirectoryObject(key=Callback(ShowWhatsOn, title=L('WhatsOn')), title=L('WhatsOn'), thumb=R(ICON_LIVETV)))
     oc.add(InputDirectoryObject(key=Callback(SearchLiveTV), title=L('SearchLiveTV'), thumb=R(ICON_SEARCH)))
     return oc
@@ -78,6 +95,36 @@ def ShowAllChannels(title):
     for line in cl:
         chan = pyhdhr.getChannelInfo(str(line))
         oc.add(DirectoryObject(key=Callback(ShowTunedTVStaged,title=str(line),guideno=str(line)), title=str(line),thumb=(chan.getImageURL() if chan.getImageURL() else R(ICON_BROKEN))))
+    return oc
+
+@route(PREFIX + '/showhdchannels')
+def ShowHDChannels(title):
+    global pyhdhr
+    oc = ObjectContainer(title2=title)
+    
+    if not pyhdhr:
+        pyhdhr = PyHDHR()
+        
+    cl = pyhdhr.getChannelList()
+    for line in cl:
+        chan = pyhdhr.getChannelInfo(str(line))
+        if chan.getHD() == 1:
+            oc.add(DirectoryObject(key=Callback(ShowTunedTVStaged,title=str(line),guideno=str(line)), title=str(line),thumb=(chan.getImageURL() if chan.getImageURL() else R(ICON_BROKEN))))
+    return oc
+    
+@route(PREFIX + '/showsdchannels')
+def ShowSDChannels(title):
+    global pyhdhr
+    oc = ObjectContainer(title2=title)
+    
+    if not pyhdhr:
+        pyhdhr = PyHDHR()
+        
+    cl = pyhdhr.getChannelList()
+    for line in cl:
+        chan = pyhdhr.getChannelInfo(str(line))
+        if chan.getHD() != 1:
+            oc.add(DirectoryObject(key=Callback(ShowTunedTVStaged,title=str(line),guideno=str(line)), title=str(line),thumb=(chan.getImageURL() if chan.getImageURL() else R(ICON_BROKEN))))
     return oc
 
 @route(PREFIX + '/showwhatson')
