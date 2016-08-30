@@ -792,24 +792,15 @@ class PyHDHR:
         for tunerkey in self.Tuners:
             chaninfos = self.Tuners[tunerkey].getChannelInfos()
             if guideno in chaninfos:
-                usethis = True
                 try:
                     response = urllib2.urlopen(chaninfos[guideno].getURL()+"?duration=1",None,5)
-                except urllib2.URLError as e:
-                    Log.Critical("urllib2.URLError: "+str(e))
-                    usethis = False
-                except urllib2.HTTPError as e:
-                    regx = re.search('HTTP Error 503:',e)
+                    return chaninfos[guideno].getURL()
+                except Exception as e:
+                    regx = re.search('HTTP Error 503:',str(e))
                     if regx != None:
                         Log.Debug("All tuners in use on "+self.Tuners[tunerkey].getLocalIP())
                     else:
-                        Log.Critical("urllib2.HTTPError: "+str(e))
-                    usethis = False
-                except Exception as e:
-                    Log.Critical("Exception: "+str(e))
-                    usethis = False
-                if usethis == True:
-                    return chaninfos[guideno].getURL()
+                        Log.Critical("Exception: "+str(e))
         return None
                 
     def getRecordedPrograms(self,force=False):
