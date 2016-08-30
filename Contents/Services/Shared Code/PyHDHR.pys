@@ -118,6 +118,10 @@ class ChannelInfo:
             self.URL = parsestr['URL']
         if 'Favorite' in parsestr:
             self.Favorite = parsestr['Favorite']
+        if self.HD != -1:
+            self.Tuner.addHD()
+        else:
+            self.Tuner.addSD()
 
     def getProgramInfos(self):
         return self.ProgramInfos
@@ -483,6 +487,8 @@ class Tuner(BaseDevice):
     LastDiscover = 0
     LastTranscodeOptionDiscover = 0
     TranscodeOption = None
+    HDCount = 0
+    SDCount = 0
     
     def __init__(self,PyHDHR):
         self.PyHDHR = PyHDHR
@@ -499,6 +505,18 @@ class Tuner(BaseDevice):
         if 'LineupURL' in parsestr:
             self.LineupURL = parsestr['LineupURL']
         
+    def addHD(self):
+        self.HDCount = self.HDCount + 1
+    
+    def getHDCount(self):
+        return self.HDCount
+        
+    def addSD(self):
+        self.SDCount = self.SDCount + 1
+        
+    def getSDCount(self):
+        return self.SDCount    
+
     def getDeviceID(self):
         return self.DeviceID
         
@@ -581,6 +599,9 @@ class Tuner(BaseDevice):
     def processLineup(self,PyHDHR):
         self.discover()
         try:
+            self.SDCount = 0
+            self.HDCount = 0
+
             response = urllib2.urlopen(self.LineupURL,None,5)
             data = json.loads(response.read())
             for item in data:
@@ -714,6 +735,20 @@ class PyHDHR:
         self.discover()
         return self.ProgramFilters
         
+    def getHDCount(self):
+        self.discover()
+        count = 0
+        for tunerkey in self.Tuners:
+            count = count + self.Tuners[tunerkey].getHDCount()
+        return count
+
+    def getSDCount(self):
+        self.discover()
+        count = 0
+        for tunerkey in self.Tuners:
+            count = count + self.Tuners[tunerkey].getSDCount()
+        return count
+        
     def registerChannelInfo(self,chaninfo,tuner):
         if chaninfo.getGuideNumber() in self.ChannelLineup:
             if tuner not in self.ChannelLineup[chaninfo.getGuideNumber()]:
@@ -755,9 +790,13 @@ class PyHDHR:
     def getLiveTVURL(self,guideno):
         self.discover(True)
         for tunerkey in self.Tuners:
-            chaninfos = self.Tuners[tunerkey].getChannelInfos()
-            if guideno in chaninfos:
-                return chaninfos[guideno].getURL()
+            response = urllib2.urlopen(self.Tuners[tunerkey].getBaseURL()+"/tuners.html",None,5)
+            data = response.read()
+            regx = re.search('<tr><td>.+<td>none</td></tr>',data)
+            if regx != None:
+                chaninfos = self.Tuners[tunerkey].getChannelInfos()
+                if guideno in chaninfos:
+                    return chaninfos[guideno].getURL()
         return None
                 
     def getRecordedPrograms(self,force=False):
@@ -927,6 +966,64 @@ class PyHDHR:
             Log.Critical("Exception in PyHDHR.discover while attempting to load: "+str(URL_DISCOVER))
             Log.Critical(e)
             return False
+            
+    def discoveryDebug(self):
+        outputstr = ""
+        outputstr = outputstr+"<<< Discovery Debug >>>\n"
+        try:
+            outputstr = outputstr+"<<< Discover (MAIN): "+URL_DISCOVER+" >>>\n"
+            response = urllib2.urlopen(URL_DISCOVER,None,5)
+            data = json.loads(response.read())
+            outputstr = outputstr+"<<< (MAIN) >>>\n<<<\n"+str(data)+"\n>>>\n"
+            for item in data:
+                if 'StorageID' in item and 'StorageURL' in item and 'DiscoverURL' in item:
+                    #DVR
+                    outputstr = outputstr+"<<< Discover (DVR): "+item['DiscoverURL']+" >>>\n"
+                    try:
+                        response1 = urllib2.urlopen(item['DiscoverURL'],None,5)
+                        data1 = json.loads(response1.read())
+                        outputstr = outputstr+"<<< (DVR) >>>\n<<<\n"+str(data1)+"\n>>>\n"
+                    except Exception as e:
+                        Log.Critical("Exception in PyHDHR.discoveryDump while attempting to load: "+str(item['DiscoverURL']))
+                        Log.Critical(e)
+                        Log.Critical("dump (failed):\n"+outputstr+"")
+                    outputstr = outputstr+"<<< Discover (DVR_STORAGE): "+item['StorageURL']+" >>>\n"
+                    try:
+                        response1 = urllib2.urlopen(item['StorageURL'],None,5)
+                        data1 = json.loads(response1.read())
+                        outputstr = outputstr+"<<< (DVR_STORAGE) >>>\n<<<\n"+str(data1)+"\n>>>\n"
+                    except Exception as e:
+                        Log.Critical("Exception in PyHDHR.discoveryDump while attempting to load: "+str(item['StorageURL']))
+                        Log.Critical(e)
+                        Log.Critical("dump (failed):\n"+outputstr+"")
+                elif 'DeviceID' in item and 'LineupURL' in item and 'DiscoverURL' in item:
+                    #Tuner
+                    outputstr = outputstr+"<<< Discover (TUNER): "+item['DiscoverURL']+" >>>\n"
+                    try:
+                        response1 = urllib2.urlopen(item['DiscoverURL'],None,5)
+                        data1 = json.loads(response1.read())
+                        outputstr = outputstr+"<<< (TUNER) >>>\n<<<\n"+str(data1)+"\n>>>\n"
+                    except Exception as e:
+                        Log.Critical("Exception in PyHDHR.discoveryDump while attempting to load: "+str(item['DiscoverURL']))
+                        Log.Critical(e)
+                        Log.Critical("dump (failed):\n"+outputstr+"")
+                    outputstr = outputstr+"<<< Discover (TUNER_LINEUP): "+item['LineupURL']+" >>>\n"
+                    try:
+                        response1 = urllib2.urlopen(item['LineupURL'],None,5)
+                        data1 = json.loads(response1.read())
+                        outputstr = outputstr+"<<< (TUNER_LINEUP) >>>\n<<<\n"+str(data1)+"\n>>>\n"
+                    except Exception as e:
+                        Log.Critical("Exception in PyHDHR.discoveryDump while attempting to load: "+str(item['LineupURL']))
+                        Log.Critical(e)
+                        Log.Critical("dump (failed):\n"+outputstr+"")
+                else:
+                    outputstr = outputstr+"PyHDHR.discoveryDump - could not determine device type - " + str(item)
+        except Exception as e:
+            Log.Critical("Exception in PyHDHR.discoveryDump while attempting to load: "+str(URL_DISCOVER))
+            Log.Critical(e)
+            Log.Critical("dump (failed):\n"+outputstr+"")
+        Log.Debug("dump (success):\n"+outputstr+"")
+
             
     def discoveryDump(self,filename):
         f = open(filename,'w')
