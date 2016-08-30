@@ -4,5 +4,11 @@
 		"label": "Use configured default transcoding profile on Extend tuners for live TV",
 		"type": "bool",
 		"default": "false"
+	},
+	{
+		"id": "EnableDebug",
+		"label": "Enable debugging menu option",
+		"type": "bool",
+		"default": "false"
 	}
 ]
