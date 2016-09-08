@@ -259,12 +259,9 @@ def ShowTunedTV(guideno,include_container=False):
     if not pyhdhr:
         pyhdhr = PyHDHR()
     
-    liveurl = pyhdhr.getLiveTVURL(guideno)
-    if not liveurl:
-        return ObjectContainer(header="Empty", message="Could not fetch url")
-    
-    chaninfo = pyhdhr.getChannelInfo(guideno)
+    chaninfo = pyhdhr.getLiveTVChannelInfo(guideno)
     if chaninfo:
+        liveurl = chaninfo.getURL()
         cont = 'mpegts'
         vcodec = 'mpeg2video'
         acodec = 'ac3'

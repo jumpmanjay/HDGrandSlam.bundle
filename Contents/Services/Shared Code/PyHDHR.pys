@@ -786,15 +786,21 @@ class PyHDHR:
                 progs = self.ChannelInfos[guideno].getProgramInfos()
                 if len(progs) > 0:
                     return progs[0]
-        
+
     def getLiveTVURL(self,guideno):
+        chaninfo = self.getLiveTVChannelInfo(guideno)
+        if chaninfo:
+            return chaninfo.getURL()
+        return None            
+        
+    def getLiveTVChannelInfo(self,guideno):
         self.discover(True)
         for tunerkey in self.Tuners:
             chaninfos = self.Tuners[tunerkey].getChannelInfos()
             if guideno in chaninfos:
                 try:
                     response = urllib2.urlopen(chaninfos[guideno].getURL()+"?duration=1",None,5)
-                    return chaninfos[guideno].getURL()
+                    return chaninfos[guideno]
                 except Exception as e:
                     regx = re.search('HTTP Error 503:',str(e))
                     if regx != None:
