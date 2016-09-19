@@ -80,7 +80,17 @@ def ShowFavoriteChannels(title):
     for line in cl:
         chan = pyhdhr.getChannelInfo(str(line))
         if chan.getFavorite() == 1:
-            oc.add(DirectoryObject(key=Callback(ShowTunedTVStaged,title=str(line),guideno=str(line)), title=str(line),thumb=(chan.getImageURL() if chan.getImageURL() else R(ICON_BROKEN))))
+            chantitle = line
+            if chan.getGuideName():
+                chantitle = str(chantitle)+" - "+chan.getGuideName()
+            prog = pyhdhr.getWhatsOn(str(line))
+            if prog:
+                if prog.getTitle():
+                    chantitle = str(chantitle)+" ( "+prog.getTitle()
+                    if prog.getEpisodeTitle():
+                        chantitle = chantitle+" - "+prog.getEpisodeTitle()
+                    chantitle = chantitle+" )"
+            oc.add(DirectoryObject(key=Callback(ShowTunedTVStaged,title=str(chantitle),guideno=str(line)), title=str(chantitle),thumb=(chan.getImageURL() if chan.getImageURL() else R(ICON_BROKEN))))
     return oc
 
 @route(PREFIX + '/showallchannels')
@@ -94,7 +104,17 @@ def ShowAllChannels(title):
     cl = pyhdhr.getChannelList()
     for line in cl:
         chan = pyhdhr.getChannelInfo(str(line))
-        oc.add(DirectoryObject(key=Callback(ShowTunedTVStaged,title=str(line),guideno=str(line)), title=str(line),thumb=(chan.getImageURL() if chan.getImageURL() else R(ICON_BROKEN))))
+        chantitle = line
+        if chan.getGuideName():
+            chantitle = str(chantitle)+" - "+chan.getGuideName()
+        prog = pyhdhr.getWhatsOn(str(line))
+        if prog:
+            if prog.getTitle():
+                chantitle = str(chantitle)+" ( "+prog.getTitle()
+                if prog.getEpisodeTitle():
+                    chantitle = chantitle+" - "+prog.getEpisodeTitle()
+                chantitle = chantitle+" )"
+        oc.add(DirectoryObject(key=Callback(ShowTunedTVStaged,title=str(chantitle),guideno=str(line)), title=str(chantitle),thumb=(chan.getImageURL() if chan.getImageURL() else R(ICON_BROKEN))))
     return oc
 
 @route(PREFIX + '/showhdchannels')
@@ -109,7 +129,17 @@ def ShowHDChannels(title):
     for line in cl:
         chan = pyhdhr.getChannelInfo(str(line))
         if chan.getHD() == 1:
-            oc.add(DirectoryObject(key=Callback(ShowTunedTVStaged,title=str(line),guideno=str(line)), title=str(line),thumb=(chan.getImageURL() if chan.getImageURL() else R(ICON_BROKEN))))
+            chantitle = line
+            if chan.getGuideName():
+                chantitle = str(chantitle)+" - "+chan.getGuideName()
+            prog = pyhdhr.getWhatsOn(str(line))
+            if prog:
+                if prog.getTitle():
+                    chantitle = str(chantitle)+" ( "+prog.getTitle()
+                    if prog.getEpisodeTitle():
+                        chantitle = chantitle+" - "+prog.getEpisodeTitle()
+                    chantitle = chantitle+" )"
+            oc.add(DirectoryObject(key=Callback(ShowTunedTVStaged,title=str(chantitle),guideno=str(line)), title=str(chantitle),thumb=(chan.getImageURL() if chan.getImageURL() else R(ICON_BROKEN))))
     return oc
     
 @route(PREFIX + '/showsdchannels')
@@ -124,7 +154,17 @@ def ShowSDChannels(title):
     for line in cl:
         chan = pyhdhr.getChannelInfo(str(line))
         if chan.getHD() != 1:
-            oc.add(DirectoryObject(key=Callback(ShowTunedTVStaged,title=str(line),guideno=str(line)), title=str(line),thumb=(chan.getImageURL() if chan.getImageURL() else R(ICON_BROKEN))))
+            chantitle = line
+            if chan.getGuideName():
+                chantitle = str(chantitle)+" - "+chan.getGuideName()
+            prog = pyhdhr.getWhatsOn(str(line))
+            if prog:
+                if prog.getTitle():
+                    chantitle = str(chantitle)+" ( "+prog.getTitle()
+                    if prog.getEpisodeTitle():
+                        chantitle = chantitle+" - "+prog.getEpisodeTitle()
+                    chantitle = chantitle+" )"
+            oc.add(DirectoryObject(key=Callback(ShowTunedTVStaged,title=str(chantitle),guideno=str(line)), title=str(chantitle),thumb=(chan.getImageURL() if chan.getImageURL() else R(ICON_BROKEN))))
     return oc
 
 @route(PREFIX + '/showwhatson')
@@ -137,7 +177,13 @@ def ShowWhatsOn(title):
     
     progs = pyhdhr.getWhatsOn()
     for guideno in progs:
-        oc.add(DirectoryObject(key=Callback(ShowTunedTVStaged, title=str(progs[guideno].getTitle() + " - " + progs[guideno].getEpisodeTitle()),guideno=guideno), title=str(progs[guideno].getTitle() + " - " + progs[guideno].getEpisodeTitle()), thumb=(progs[guideno].getImageURL() if progs[guideno].getImageURL() else R(ICON_UNKNOWN))))
+        eptitle = ""
+        if progs[guideno].getTitle():
+            eptitle = progs[guideno].getTitle()
+            if progs[guideno].getEpisodeTitle():
+                eptitle = eptitle+" - "+progs[guideno].getEpisodeTitle()
+        oc.add(DirectoryObject(key=Callback(ShowTunedTVStaged, title=str(eptitle),guideno=guideno), title=str(eptitle), thumb=(progs[guideno].getImageURL() if progs[guideno].getImageURL() else R(ICON_UNKNOWN))))
+    oc.objects.sort(key = lambda obj: obj.title)
     return oc
     
 @route(PREFIX + '/showtunedtvstaged')
@@ -219,7 +265,7 @@ def SearchAll(query):
 
     if len(progs) > 0:
         for recprogkey in progs:
-            oc.add(ShowRecording(recprogkey=recprogkey))    
+            oc.add(ShowRecording(recprogkey=recprogkey))
     oc.objects.sort(key = lambda obj: obj.title)
     return oc
 
