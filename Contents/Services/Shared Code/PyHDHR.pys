@@ -786,6 +786,7 @@ class PyHDHR:
                 progs = self.ChannelInfos[guideno].getProgramInfos()
                 if len(progs) > 0:
                     return progs[0]
+        return None
 
     def getLiveTVURL(self,guideno):
         chaninfo = self.getLiveTVChannelInfo(guideno)
