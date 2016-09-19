@@ -1,10 +1,11 @@
 [
-	{
-		"id": "UseDefaultTranscoding",
-		"label": "Use configured default transcoding profile on Extend tuners for live TV",
-		"type": "bool",
-		"default": "false"
-	},
+    {
+        "id": "TranscodeType",
+        "type": "enum",
+        "label": "Tuner transcode (HDTC-2US only)",
+        "values": ["none","default","heavy","mobile","internet540","internet480","internet360","internet240"],
+        "default": "default"
+    },
 	{
 		"id": "EnableDebug",
 		"label": "Enable debugging menu option",
