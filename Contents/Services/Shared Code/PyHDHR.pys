@@ -705,6 +705,8 @@ class PyHDHR:
     LastDiscover = 0
     LastRecordedDiscover = 0
     RecordedPrograms = {}
+    SDDVREnabled = False
+    SDDVRDiscover = 0
     
     def __init__(self):
         return
@@ -935,6 +937,25 @@ class PyHDHR:
             Log.Critical(e)
             return False
             
+    def hasSDDVR(self,force=False):
+        if not force:
+            if time.time() - self.SDDVRDiscover < 60:
+                return self.SDDVREnabled
+            
+        self.SDDVRDiscover = time.time()
+            
+        try:
+            response = urllib2.urlopen(URL_DISCOVER,None,5)
+            data = json.loads(response.read())
+            for item in data:
+                if 'StorageID' in item:
+                    self.SDDVREnabled = True
+                    return True
+        except Exception as e:
+            Log.Critical("Exception in PyHDHR.hasSDDVR while attempting to load: "+str(URL_DISCOVER))
+            Log.Critical(e)
+        return self.SDDVREnabled
+
     def discover(self,force=False):
         if not force:
             if time.time() - self.LastDiscover < 60:
