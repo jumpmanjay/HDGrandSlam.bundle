@@ -39,7 +39,8 @@ def MainMenu():
 
     oc = ObjectContainer()
     oc.add(DirectoryObject(key=Callback(ShowLiveTV, title=L('LiveTV')), title=L('LiveTV'), thumb=R(ICON_LIVETV)))
-    oc.add(DirectoryObject(key=Callback(ShowMainRecordingsMenu, title=L('Recordings')), title=L('Recordings'), thumb=R(ICON_RECORDINGS)))
+    if pyhdhr.hasSDDVR():
+        oc.add(DirectoryObject(key=Callback(ShowMainRecordingsMenu, title=L('Recordings')), title=L('Recordings'), thumb=R(ICON_RECORDINGS)))
     oc.add(InputDirectoryObject(key=Callback(SearchAll), title=L('SearchAll'), thumb=R(ICON_SEARCH)))
     oc.add(PrefsObject(title=L('Settings'), thumb=R(ICON_SETTINGS)))
     debug = Prefs['EnableDebug']
