@@ -939,6 +939,8 @@ class PyHDHR:
             
     def hasSDDVR(self,force=False):
         if not force:
+            if len(self.DVRs) > 0:
+                return True
             if time.time() - self.SDDVRDiscover < 60:
                 return self.SDDVREnabled
             
