@@ -1,5 +1,11 @@
 [
     {
+        "id": "TunerIPList",
+        "type": "text",
+        "label": "(optional) Explicitly specify HDHomeRun Tuner IPs separated by a semicolon (;). This ignores config-free dynamic discover mode.",
+        "default": ""
+    },
+    {
         "id": "TranscodeType",
         "type": "enum",
         "label": "Tuner transcode (HDTC-2US only)",
