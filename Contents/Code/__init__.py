@@ -36,6 +36,7 @@ def Start():
 def MainMenu():
     global pyhdhr
     pyhdhr = PyHDHR()
+    pyhdhr.setManualTunerList(Prefs['TunerIPList'])
 
     oc = ObjectContainer()
     oc.add(DirectoryObject(key=Callback(ShowLiveTV, title=L('LiveTV')), title=L('LiveTV'), thumb=R(ICON_LIVETV)))
