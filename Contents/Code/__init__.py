@@ -71,7 +71,7 @@ def ShowLiveTV(title):
     return oc
 
 @route(PREFIX + '/showfavoritechannels')
-def ShowFavoriteChannels(title):
+def ShowFavoriteChannels(title,excludeFields=0):
     global pyhdhr
     oc = ObjectContainer(title2=title)
 
@@ -96,7 +96,7 @@ def ShowFavoriteChannels(title):
     return oc
 
 @route(PREFIX + '/showallchannels')
-def ShowAllChannels(title):
+def ShowAllChannels(title,excludeFields=0):
     global pyhdhr
     oc = ObjectContainer(title2=title)
 
@@ -120,7 +120,7 @@ def ShowAllChannels(title):
     return oc
 
 @route(PREFIX + '/showhdchannels')
-def ShowHDChannels(title):
+def ShowHDChannels(title,excludeFields=0):
     global pyhdhr
     oc = ObjectContainer(title2=title)
 
@@ -145,7 +145,7 @@ def ShowHDChannels(title):
     return oc
 
 @route(PREFIX + '/showsdchannels')
-def ShowSDChannels(title):
+def ShowSDChannels(title,excludeFields=0):
     global pyhdhr
     oc = ObjectContainer(title2=title)
 
@@ -170,7 +170,7 @@ def ShowSDChannels(title):
     return oc
 
 @route(PREFIX + '/showwhatson')
-def ShowWhatsOn(title):
+def ShowWhatsOn(title,excludeFields=0):
     global pyhdhr
     oc = ObjectContainer(title2=title)
 
