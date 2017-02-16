@@ -302,7 +302,7 @@ def SearchRecorded(query):
     return oc
 
 @route(PREFIX + '/showtunedtv')
-def ShowTunedTV(guideno,include_container=False,checkFiles=0):
+def ShowTunedTV(guideno,include_container=False,checkFiles=0,includeBandwidths=0):
     global pyhdhr
     if not pyhdhr:
         pyhdhr = PyHDHR()
@@ -425,7 +425,7 @@ def ShowTunedTV(guideno,include_container=False,checkFiles=0):
         return ObjectContainer(header="Empty", message=msg)
 
 @route(PREFIX + '/showrecording')
-def ShowRecording(recprogkey,include_container=False):
+def ShowRecording(recprogkey,include_container=False,checkFiles=0,includeBandwidths=0):
     global pyhdhr
     if not pyhdhr:
         pyhdhr = PyHDHR()
