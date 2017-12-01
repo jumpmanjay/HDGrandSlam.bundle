@@ -302,7 +302,7 @@ def SearchRecorded(query):
     return oc
 
 @route(PREFIX + '/showtunedtv')
-def ShowTunedTV(guideno,include_container=False,checkFiles=0,includeBandwidths=0):
+def ShowTunedTV(guideno,include_container=False,checkFiles=0,includeBandwidths=0,offset=0):
     global pyhdhr
     if not pyhdhr:
         pyhdhr = PyHDHR()
