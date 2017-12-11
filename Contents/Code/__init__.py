@@ -308,6 +308,7 @@ def ShowTunedTV(guideno,include_container=False,checkFiles=0,includeBandwidths=0
         pyhdhr = PyHDHR()
 
     chaninfo = pyhdhr.getLiveTVChannelInfo(guideno)
+
     if chaninfo:
         liveurl = chaninfo.getURL()
         cont = 'mpegts'
@@ -344,18 +345,23 @@ def ShowTunedTV(guideno,include_container=False,checkFiles=0,includeBandwidths=0
                 Log.Critical(msg)
 
             if chaninfo.getAudioCodec() == "AAC":
-                acodec = 'aac'
+                if t.getModelNumber() == "HDHR4-2DT":
+                    acodec = 'aac_latm'
+                else:
+                    acodec = 'aac'
             elif chaninfo.getAudioCodec() == "AC3":
                 acodec = 'ac3'
+            elif chaninfo.getAudioCodec() == "MPEG":
+                acodec = 'mp2'
             else:
                 msg = "Unknown audio codec: " + chaninfo.getAudioCodec()+". Using default"
                 Log.Critical(msg)
-
+	
         p_title = ""
         p_stitle = ""
         p_synopsis = ""
         p_imageurl = ""
-
+		
         proginfo = pyhdhr.getWhatsOn(guideno)
         if not proginfo:
             p_title=chaninfo.getGuideNumber()
